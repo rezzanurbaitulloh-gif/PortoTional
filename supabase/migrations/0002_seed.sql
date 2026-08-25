@@ -1,0 +1,48 @@
+-- PortoTional seed data
+insert into public.professions (slug, name, description, configuration) values
+('developer', 'Software Developer', 'Engineers and programmers', '{"recommendedSections":["about","experience","skills","projects","education"],"workLabel":"Projects"}'),
+('designer', 'UI/UX Designer', 'Product and visual designers', '{"recommendedSections":["about","experience","selectedWork","skills","education"],"workLabel":"Selected Work"}'),
+('graphic-designer', 'Graphic Designer', 'Brand and graphic design professionals', '{"recommendedSections":["about","experience","featuredWork","skills","education"],"workLabel":"Featured Work"}'),
+('teacher', 'Teacher', 'Educators and instructors', '{"recommendedSections":["about","teachingExperience","subjects","education","certifications"],"workLabel":"Teaching Experience"}'),
+('lecturer', 'Lecturer', 'Academic lecturers and researchers', '{"recommendedSections":["about","experience","publications","education","achievements"],"workLabel":"Publications"}'),
+('marketer', 'Marketing Professional', 'Digital and traditional marketing', '{"recommendedSections":["about","experience","campaigns","skills","education"],"workLabel":"Campaigns"}'),
+('sales', 'Sales Professional', 'Sales and business development', '{"recommendedSections":["about","experience","achievements","skills","education"],"workLabel":"Highlights"}'),
+('accountant', 'Accountant', 'Finance and accounting professionals', '{"recommendedSections":["about","experience","certifications","education","skills"],"workLabel":"Highlights"}'),
+('hr', 'Human Resources', 'People and culture professionals', '{"recommendedSections":["about","experience","skills","certifications","education"],"workLabel":"Highlights"}'),
+('engineer', 'Engineer', 'Mechanical, civil, electrical engineers', '{"recommendedSections":["about","experience","projects","certifications","education"],"workLabel":"Projects"}'),
+('architect', 'Architect', 'Building and spatial designers', '{"recommendedSections":["about","portfolio","experience","education","skills"],"workLabel":"Portfolio"}'),
+('photographer', 'Photographer', 'Photography professionals', '{"recommendedSections":["about","gallery","services","experience"],"workLabel":"Featured Shots"}'),
+('videographer', 'Videographer', 'Video production professionals', '{"recommendedSections":["about","showreel","services","experience"],"workLabel":"Showreel"}'),
+('writer', 'Writer', 'Writers and content creators', '{"recommendedSections":["about","publishedWork","experience","skills"],"workLabel":"Published Work"}'),
+('journalist', 'Journalist', 'News and media professionals', '{"recommendedSections":["about","articles","experience","education"],"workLabel":"Articles"}'),
+('researcher', 'Researcher', 'Academic and industry researchers', '{"recommendedSections":["about","publications","experience","education","skills"],"workLabel":"Publications"}'),
+('healthcare', 'Healthcare Worker', 'Medical and care professionals', '{"recommendedSections":["about","experience","certifications","education","languages"],"workLabel":"Experience"}'),
+('chef', 'Chef', 'Culinary professionals', '{"recommendedSections":["about","signatureDishes","experience","skills"],"workLabel":"Signature Dishes"}'),
+('consultant', 'Consultant', 'Independent advisors and consultants', '{"recommendedSections":["about","services","experience","testimonials","skills"],"workLabel":"Services"}'),
+('lawyer', 'Legal Professional', 'Lawyers and legal consultants', '{"recommendedSections":["about","experience","cases","education","certifications"],"workLabel":"Notable Cases"}'),
+('student', 'Student', 'Students building early identity', '{"recommendedSections":["about","education","projects","skills","activities"],"workLabel":"Projects"}'),
+('freelancer', 'Freelancer', 'Multi-disciplinary freelancers', '{"recommendedSections":["about","services","portfolio","experience","skills"],"workLabel":"Portfolio"}'),
+('content-creator', 'Content Creator', 'Social media and video creators', '{"recommendedSections":["about","channels","bestContent","collaborations"],"workLabel":"Best Content"}'),
+('other', 'Other Professional', 'Any other profession', '{"recommendedSections":["about","experience","skills","education"],"workLabel":"Highlights"}')
+on conflict (slug) do nothing;
+
+insert into public.templates (type, name, slug, description, configuration, is_premium) values
+('cv', 'Classic Professional', 'classic-professional',
+ 'Timeless single-column ATS-friendly layout.',
+ '{"accent":"#0B0C10","serif":false,"photoPosition":"header-right","sectionsDefaultOrder":["summary","experience","education","skills","projects","certifications"]}', false),
+('cv', 'Modern Minimal', 'modern-minimal',
+ 'Clean minimal layout with generous whitespace.',
+ '{"accent":"#2563EB","serif":false,"photoPosition":"none","sectionsDefaultOrder":["summary","experience","projects","skills","education","certifications"]}', false),
+('cv', 'Executive Gold', 'executive-gold',
+ 'Premium executive look with champagne gold accents.',
+ '{"accent":"#D4AF37","serif":true,"photoPosition":"sidebar-top","sectionsDefaultOrder":["summary","experience","skills","projects","education","certifications"]}', true),
+('website', 'Editorial Minimal', 'editorial-minimal',
+ 'Quiet editorial portfolio with strong typography.',
+ '{"accent":"#0B0C10","background":"#F8F9FA","font":"modern","animations":true}', false),
+('website', 'Corporate Premium', 'corporate-premium',
+ 'Confident corporate profile for senior professionals.',
+ '{"accent":"#D4AF37","background":"#0B0C10","font":"modern","animations":true}', true),
+('website', 'Showcase Bold', 'showcase-bold',
+ 'Visual-first showcase for creative work.',
+ '{"accent":"#7C3AED","background":"#101114","font":"display","animations":true,"threeD":true}', true)
+on conflict (slug) do nothing;

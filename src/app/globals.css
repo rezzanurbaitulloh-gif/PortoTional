@@ -1,0 +1,68 @@
+@import "tailwindcss";
+
+@theme {
+  --color-obsidian: #0b0c10;
+  --color-obsidian-raised: #101218;
+  --color-surface: #14161d;
+  --color-surface-2: #1a1d26;
+  --color-line: #232733;
+  --color-line-strong: #313646;
+  --color-ivory: #f8f9fa;
+  --color-ivory-dim: #b9bfc9;
+  --color-muted: #8a92a0;
+  --color-gold: #d4af37;
+  --color-gold-soft: #e5c76b;
+  --color-gold-deep: #a8842a;
+  --color-success: #4ade80;
+  --color-danger: #f87171;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-display), Georgia, serif;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-obsidian);
+  color: var(--color-ivory);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: rgba(212, 175, 55, 0.28);
+}
+
+*:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.gold-rule {
+  background: linear-gradient(90deg, transparent, var(--color-gold), transparent);
+  height: 1px;
+}
+
+.card-lift {
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease;
+}
+.card-lift:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-line-strong);
+}
