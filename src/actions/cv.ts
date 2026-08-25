@@ -3,9 +3,16 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getSupabaseServerClient, requireUser } from "@/lib/supabase/server";
-import { requireCurrentProfile, getPlan } from "@/services/identity";
+import {
+  requireCurrentProfile,
+  getPlan,
+  getIdentityBundle,
+} from "@/services/identity";
 import { planLimits } from "@/lib/constants";
 import { logAudit } from "@/services/audit";
+import { aiChat } from "@/lib/ai/gateway";
+import { cvGenerateMessages } from "@/lib/ai/prompts";
+import { rateLimit } from "@/lib/ai/rate-limit";
 import type {
   ResumeRow,
   ResumeSectionRow,
@@ -444,5 +451,129 @@ export async function saveVersionAction(
     return { ok: true };
   } catch {
     return { ok: false, error: "Failed to save a version." };
+  }
+}
+
+export async function generateResumeAction(
+  input: unknown,
+): Promise<{ ok: boolean; error?: string; id?: string }> {
+  try {
+    const user = await requireUser();
+    const profile = await requireCurrentProfile();
+    const parsed = createSchema.safeParse(input);
+    if (!parsed.success) return { ok: false, error: "Invalid CV details" };
+
+    const rl = rateLimit(`cvgen:${user.id}`, 12);
+    if (!rl.ok) {
+      return {
+        ok: false,
+        error: `Too many generations. Try again in ${Math.ceil(rl.retryAfterSec / 60)} min.`,
+      };
+    }
+
+    const plan = await getPlan(user.id);
+    const supabase = await getSupabaseServerClient();
+    const { count } = await supabase
+      .from("resumes")
+      .select("id", { count: "exact", head: true })
+      .eq("profile_id", profile.id);
+    if ((count ?? 0) >= planLimits(plan).maxResumes) {
+      return {
+        ok: false,
+        error: `The ${plan} plan allows up to ${planLimits(plan).maxResumes} CVs. Upgrade to Pro for more.`,
+      };
+    }
+
+    const bundle = await getIdentityBundle(profile.id);
+    const identityContext = { ...bundle, profile };
+    const ai = await aiChat(
+      cvGenerateMessages(identityContext, parsed.data.target_role || undefined),
+      { jsonMode: true },
+    );
+
+    let summaryText = "";
+    let targetRole = parsed.data.target_role || "";
+    try {
+      const generated = JSON.parse(ai.text) as {
+        summary?: unknown;
+        targetRole?: unknown;
+      };
+      if (typeof generated.summary === "string" && !/insufficient information/i.test(generated.summary)) {
+        summaryText = generated.summary.slice(0, 1200);
+      }
+      if (
+        typeof generated.targetRole === "string" &&
+        !targetRole &&
+        generated.targetRole.length <= 120
+      ) {
+        targetRole = generated.targetRole;
+      }
+    } catch {
+      // Non-JSON response: fall back to a plain CV without AI content.
+    }
+
+    let templateId = parsed.data.template_id ?? null;
+    if (!templateId) {
+      const { data: tpl } = await supabase
+        .from("templates")
+        .select("id")
+        .eq("type", "cv")
+        .eq("slug", "classic-professional")
+        .maybeSingle();
+      templateId = tpl?.id ?? null;
+    }
+
+    const { data: resume, error } = await supabase
+      .from("resumes")
+      .insert({
+        profile_id: profile.id,
+        name: parsed.data.name,
+        template_id: templateId,
+        target_role: targetRole,
+      })
+      .select()
+      .single();
+    if (error) return { ok: false, error: error.message };
+
+    const defaults: ResumeSectionType[] = [
+      "summary",
+      "experience",
+      "education",
+      "skills",
+      "projects",
+      "certifications",
+    ];
+    await supabase.from("resume_sections").insert(
+      defaults.map((section_type, idx) => ({
+        resume_id: resume.id,
+        section_type,
+        sort_order: idx,
+        ...(section_type === "summary" && summaryText
+          ? { custom_content: { text: summaryText } }
+          : {}),
+      })),
+    );
+
+    const bundleSnapshot = await buildResumeSnapshot(resume.id);
+    await supabase.from("resume_versions").insert({
+      resume_id: resume.id,
+      snapshot: bundleSnapshot,
+      version_number: 1,
+      label: summaryText ? "Created with AI" : "Created",
+    });
+
+    await logAudit({
+      actorUserId: user.id,
+      action: "cv.generate_ai",
+      entityId: resume.id,
+    });
+    revalidatePath("/app/cv");
+    return { ok: true, id: resume.id };
+  } catch (err) {
+    return {
+      ok: false,
+      error:
+        err instanceof Error ? err.message : "Failed to generate the CV.",
+    };
   }
 }

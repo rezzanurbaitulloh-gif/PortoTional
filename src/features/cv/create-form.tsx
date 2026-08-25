@@ -28,25 +28,42 @@ export function CreateCvForm({
     templates.find((t) => !t.is_premium)?.id ?? null,
   );
   const [busy, setBusy] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const isPro = plan === "pro";
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    setBusy(true);
+  async function runCreate(generate: boolean) {
+    if (generate) setGenerating(true);
+    else setBusy(true);
     try {
-      const { createResumeAction } = await import("@/actions/cv");
-      const res = await createResumeAction({
-        name,
-        template_id: templateId,
-        target_role: targetRole,
-      });
+      const mod = await import("@/actions/cv");
+      const res = generate
+        ? await mod.generateResumeAction({
+            name,
+            template_id: templateId,
+            target_role: targetRole,
+          })
+        : await mod.createResumeAction({
+            name,
+            template_id: templateId,
+            target_role: targetRole,
+          });
       if (!res.ok) throw new Error(res.error);
-      toast.success("CV created — it starts from your Master Identity.");
+      toast.success(
+        generate
+          ? "CV generated from your Master Identity with AI."
+          : "CV created — it starts from your Master Identity.",
+      );
       router.push(`/app/cv/${res.id}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not create the CV.");
+      setGenerating(false);
       setBusy(false);
     }
+  }
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    await runCreate(false);
   }
 
   return (
@@ -120,15 +137,35 @@ export function CreateCvForm({
               </p>
             ) : null}
           </div>
-          <Button type="submit" disabled={busy}>
-            {busy ? (
-              <>
-                <Loader2 className="animate-spin" /> Creating…
-              </>
-            ) : (
-              "Create CV"
-            )}
-          </Button>
+          <div className="flex flex-wrap gap-3">
+            <Button type="submit" disabled={busy || generating}>
+              {busy ? (
+                <>
+                  <Loader2 className="animate-spin" /> Creating…
+                </>
+              ) : (
+                "Create CV"
+              )}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={busy || generating}
+              onClick={() => runCreate(true)}
+            >
+              {generating ? (
+                <>
+                  <Loader2 className="animate-spin" /> Generating…
+                </>
+              ) : (
+                "Generate with AI"
+              )}
+            </Button>
+          </div>
+          <p className="text-xs text-muted">
+            Generate with AI drafts your professional summary and target role
+            from Master Identity facts only — never invented.
+          </p>
         </form>
       </CardContent>
     </Card>

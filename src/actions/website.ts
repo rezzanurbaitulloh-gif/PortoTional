@@ -3,9 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getSupabaseServerClient, requireUser } from "@/lib/supabase/server";
-import { requireCurrentProfile, getPlan } from "@/services/identity";
+import { requireCurrentProfile, getPlan, getIdentityBundle } from "@/services/identity";
 import { planLimits } from "@/lib/constants";
 import { logAudit } from "@/services/audit";
+import { aiChat } from "@/lib/ai/gateway";
+import { websiteSuggestMessages } from "@/lib/ai/prompts";
+import { rateLimit } from "@/lib/ai/rate-limit";
 import type { WebsiteRow, WebsiteSectionRow } from "@/types/database";
 
 export async function getWebsiteForOwner(): Promise<{
@@ -192,5 +195,80 @@ export async function togglePublishAction(
     return { ok: true };
   } catch {
     return { ok: false, error: "Failed to change publish state." };
+  }
+}
+
+const SUGGESTION_SCHEMA = z.object({
+  theme: z.enum(["editorial-minimal", "corporate-premium", "showcase-bold"]),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+  heroTagline: z.string().max(200),
+  sectionOrder: z
+    .array(z.enum(["hero", "about", "work", "experience", "skills", "contact"]))
+    .length(6),
+  seoTitle: z.string().max(80),
+  seoDescription: z.string().max(200),
+});
+
+export async function suggestWebsiteAction(): Promise<{
+  ok: boolean;
+  error?: string;
+  suggestion?: {
+    theme: string;
+    color: string;
+    heroTagline: string;
+    sectionOrder: string[];
+    seoTitle: string;
+    seoDescription: string;
+  };
+}> {
+  try {
+    const user = await requireUser();
+    const profile = await requireCurrentProfile();
+
+    const rl = rateLimit(`webgen:${user.id}`, 12);
+    if (!rl.ok) {
+      return {
+        ok: false,
+        error: `Too many suggestions. Try again in ${Math.ceil(rl.retryAfterSec / 60)} min.`,
+      };
+    }
+
+    const plan = await getPlan(user.id);
+    if (plan !== "pro") {
+      return {
+        ok: false,
+        error: "AI website suggestions are part of PortoTional Pro.",
+      };
+    }
+
+    const bundle = await getIdentityBundle(profile.id);
+    const ai = await aiChat(
+      websiteSuggestMessages({ ...bundle, profile }),
+      { jsonMode: true },
+    );
+
+    let raw: unknown;
+    try {
+      raw = JSON.parse(ai.text);
+    } catch {
+      return { ok: false, error: "The AI response could not be parsed. Try again." };
+    }
+    const parsed = SUGGESTION_SCHEMA.safeParse(raw);
+    if (!parsed.success) {
+      return { ok: false, error: "The AI suggestion was incomplete. Try again." };
+    }
+
+    await logAudit({
+      actorUserId: user.id,
+      action: "website.suggest_ai",
+      entityId: profile.id,
+    });
+    return { ok: true, suggestion: parsed.data };
+  } catch (err) {
+    return {
+      ok: false,
+      error:
+        err instanceof Error ? err.message : "Failed to generate a suggestion.",
+    };
   }
 }

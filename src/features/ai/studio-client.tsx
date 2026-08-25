@@ -7,6 +7,7 @@ import {
   FileSearch,
   Languages,
   Loader2,
+  MessageSquare,
   ScanLine,
   Sparkles,
   Target,
@@ -19,7 +20,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 
-type Tool = "summary" | "refine" | "translate" | "analyze";
+type Tool = "summary" | "refine" | "translate" | "analyze" | "career";
+
+type ChatTurn = { role: "user" | "assistant"; content: string };
 
 export function AiStudioClient({
   profile,
@@ -38,6 +41,9 @@ export function AiStudioClient({
   const [resumes, setResumes] = useState<{ id: string; name: string }[]>([]);
   const [result, setResult] = useState<string>("");
   const [busy, setBusy] = useState(false);
+  const [chat, setChat] = useState<ChatTurn[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [chatBusy, setChatBusy] = useState(false);
 
   async function loadResumes() {
     if (resumes.length) return true;
@@ -108,6 +114,30 @@ export function AiStudioClient({
     }
   }
 
+  async function sendChat() {
+    const content = chatInput.trim();
+    if (!content || chatBusy) return;
+    const next: ChatTurn[] = [...chat, { role: "user", content }];
+    setChat(next);
+    setChatInput("");
+    setChatBusy(true);
+    try {
+      const res = await fetch("/api/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "career", messages: next }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setChat([...next, { role: "assistant", content: data.text }]);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Assistant unavailable.");
+      setChat(chat);
+    } finally {
+      setChatBusy(false);
+    }
+  }
+
   const tools: {
     key: Tool;
     label: string;
@@ -140,6 +170,13 @@ export function AiStudioClient({
       label: "Translate",
       icon: <Languages className="h-4 w-4" />,
       description: "Translate professional content faithfully between languages.",
+    },
+    {
+      key: "career",
+      label: "Career Assistant",
+      icon: <MessageSquare className="h-4 w-4" />,
+      description:
+        "Chat about setup, writing and career preparation. It asks for details instead of inventing them.",
     },
   ];
 
@@ -184,7 +221,62 @@ export function AiStudioClient({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {tool === "refine" || tool === "translate" ? (
+          {tool === "career" ? (
+            <div className="space-y-3">
+              <div className="max-h-80 space-y-2 overflow-y-auto rounded-lg border border-line bg-obsidian-raised p-3">
+                {chat.length === 0 ? (
+                  <p className="text-xs text-muted">
+                    Ask anything about your career prep — e.g. “How do I
+                    describe a career gap honestly?” or “Help me prepare for a
+                    product manager interview.”
+                  </p>
+                ) : (
+                  chat.map((m, i) => (
+                    <div
+                      key={i}
+                      className={`rounded-md px-3 py-2 text-sm leading-relaxed ${
+                        m.role === "user"
+                          ? "ml-8 bg-gold/10 text-ivory"
+                          : "mr-8 bg-surface text-ivory-dim"
+                      }`}
+                    >
+                      {m.content}
+                    </div>
+                  ))
+                )}
+                {chatBusy ? (
+                  <div className="mr-8 flex items-center gap-2 px-1 py-1 text-xs text-muted">
+                    <Loader2 className="h-3 w-3 animate-spin" /> thinking…
+                  </div>
+                ) : null}
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      sendChat();
+                    }
+                  }}
+                  placeholder="Type your question…"
+                  aria-label="Message the career assistant"
+                  disabled={chatBusy}
+                />
+                <Button onClick={sendChat} disabled={chatBusy || !chatInput.trim()}>
+                  {chatBusy ? (
+                    <Loader2 className="animate-spin" />
+                  ) : (
+                    <MessageSquare />
+                  )}
+                  Send
+                </Button>
+              </div>
+            </div>
+          ) : null}
+
+          {tool !== "career" && (tool === "refine" || tool === "translate") ? (
             <>
               <div>
                 <Label htmlFor="ai-text">Your text</Label>
@@ -244,10 +336,12 @@ export function AiStudioClient({
             </div>
           ) : null}
 
-          <Button onClick={() => run(tool)} disabled={busy}>
-            {busy ? <Loader2 className="animate-spin" /> : <Sparkles />}
-            Run AI
-          </Button>
+          {tool !== "career" ? (
+            <Button onClick={() => run(tool)} disabled={busy}>
+              {busy ? <Loader2 className="animate-spin" /> : <Sparkles />}
+              Run AI
+            </Button>
+          ) : null}
 
           {result ? (
             <div className="rounded-lg border border-gold/30 bg-gold/[0.04] p-4">

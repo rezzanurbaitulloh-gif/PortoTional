@@ -61,7 +61,43 @@ export function WebsiteCustomizer({
   const [sections, setSections] = useState(initialSections);
   const [published, setPublished] = useState(website?.published ?? false);
   const [busy, setBusy] = useState(false);
+  const [suggesting, setSuggesting] = useState(false);
   const isPro = plan === "pro";
+
+  async function suggest() {
+    setSuggesting(true);
+    try {
+      const { suggestWebsiteAction } = await import("@/actions/website");
+      const res = await suggestWebsiteAction();
+      if (!res.ok || !res.suggestion) throw new Error(res.error);
+      const s = res.suggestion;
+      setConfig((c) => ({
+        ...c,
+        theme: s.theme,
+        color: s.color,
+        heroTagline: s.heroTagline,
+      }));
+      setSeo((v) => ({
+        ...v,
+        title: s.seoTitle || v.title,
+        description: s.seoDescription || v.description,
+      }));
+      setSections(
+        [...sections]
+          .sort(
+            (a, b) =>
+              s.sectionOrder.indexOf(a.section_type) -
+              s.sectionOrder.indexOf(b.section_type),
+          )
+          .map((sec, i) => ({ ...sec, sort_order: i })),
+      );
+      toast.success("AI suggestion applied — review and save.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Suggestion failed.");
+    } finally {
+      setSuggesting(false);
+    }
+  }
 
   const valuesKey = JSON.stringify([config, seo, sections]);
   const persist = async () => {
@@ -180,7 +216,25 @@ export function WebsiteCustomizer({
 
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm">Theme</CardTitle>
+          <CardTitle className="flex items-center justify-between gap-2 text-sm">
+            Theme
+            {isPro ? (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={suggesting || busy}
+                onClick={suggest}
+              >
+                {suggesting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> Suggesting…
+                  </>
+                ) : (
+                  "Suggest with AI"
+                )}
+              </Button>
+            ) : null}
+          </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-2 sm:grid-cols-3">
           {themes.map((t) => {

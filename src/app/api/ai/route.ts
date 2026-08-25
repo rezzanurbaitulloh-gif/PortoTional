@@ -8,6 +8,7 @@ import {
   summaryMessages,
   tailorMessages,
   translateMessages,
+  careerMessages,
 } from "@/lib/ai/prompts";
 import { rateLimit } from "@/lib/ai/rate-limit";
 import { getPlan } from "@/services/identity";
@@ -37,6 +38,18 @@ const actionSchema = z.discriminatedUnion("action", [
     action: z.literal("translate"),
     text: z.string().min(1).max(4000),
     targetLanguage: z.string().max(40),
+  }),
+  z.object({
+    action: z.literal("career"),
+    messages: z
+      .array(
+        z.object({
+          role: z.enum(["user", "assistant"]),
+          content: z.string().min(1).max(4000),
+        }),
+      )
+      .min(1)
+      .max(24),
   }),
 ]);
 
@@ -92,6 +105,9 @@ export async function POST(req: NextRequest) {
         break;
       case "translate":
         messages = translateMessages(parsed.data.text, parsed.data.targetLanguage);
+        break;
+      case "career":
+        messages = careerMessages(parsed.data.messages);
         break;
     }
 

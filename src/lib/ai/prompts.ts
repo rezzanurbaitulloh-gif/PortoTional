@@ -87,3 +87,36 @@ export function importStructureMessages(rawText: string): AiMessage[] {
     { role: "user", content: rawText.slice(0, 24000) },
   ];
 }
+
+export function cvGenerateMessages(
+  identityContext: unknown,
+  targetRole?: string,
+): AiMessage[] {
+  return [
+    {
+      role: "system",
+      content: `${TRUTH_GUARD}\nGenerate a CV structure from the candidate's Master Identity. Use ONLY facts present in the data. Return strict JSON: {"summary": string, "targetRole": string, "highlights": string[]}. "summary" is a 3-4 sentence professional summary written from the data only. "targetRole" echoes the given target role, or the closest profession/title found in the data, or "" if none. "highlights" contains up to 5 one-line professional highlights drawn strictly from the data.${targetRole ? ` The candidate targets this role: ${targetRole}.` : ""}`,
+    },
+    { role: "user", content: JSON.stringify(identityContext).slice(0, 12000) },
+  ];
+}
+
+export function websiteSuggestMessages(identityContext: unknown): AiMessage[] {
+  return [
+    {
+      role: "system",
+      content: `${TRUTH_GUARD}\nSuggest a personal website configuration for a professional based only on their identity data. Return strict JSON: {"theme": "editorial-minimal" | "corporate-premium" | "showcase-bold", "color": "#RRGGBB", "heroTagline": string, "sectionOrder": string[], "seoTitle": string, "seoDescription": string}. Pick the theme that best fits their profession and portfolio density (showcase-bold only for visual/creative work with a real portfolio). sectionOrder must be a permutation of exactly: ["hero","about","work","experience","skills","contact"]. heroTagline max 90 chars. seoTitle max 60 chars. seoDescription max 155 chars.`,
+    },
+    { role: "user", content: JSON.stringify(identityContext).slice(0, 10000) },
+  ];
+}
+
+export function careerMessages(history: AiMessage[]): AiMessage[] {
+  return [
+    {
+      role: "system",
+      content: `${TRUTH_GUARD}\nYou are the PortoTional Career Assistant. Help with professional setup, writing, career preparation and CV improvement. Be concise, practical and honest. When information is missing, ask for it instead of inventing it.`,
+    },
+    ...history.slice(-12),
+  ];
+}
