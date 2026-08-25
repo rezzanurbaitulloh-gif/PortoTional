@@ -1,3 +1,4 @@
+import { websiteUrl, websiteDisplayHost } from "@/lib/app-url";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -299,11 +300,11 @@ export default async function PublicProfilePage({
             <p className="mt-3 text-xs text-muted">
               Personal site:{" "}
               <a
-                href={`https://${username}.${process.env.NEXT_PUBLIC_ROOT_DOMAIN}`}
+                href={websiteUrl(username)}
                 className="text-gold hover:underline"
                 rel="noopener noreferrer"
               >
-                {username}.{process.env.NEXT_PUBLIC_ROOT_DOMAIN}
+                {websiteDisplayHost(username)}
               </a>
             </p>
           ) : null}

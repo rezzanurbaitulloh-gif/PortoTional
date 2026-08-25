@@ -1,3 +1,4 @@
+import { websiteUrl } from "@/lib/app-url";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -70,7 +71,7 @@ export async function generateMetadata({
     description:
       seoDesc || site.profile.summary?.slice(0, 160) || title,
     robots: { index: site.website.seo_configuration?.index !== false },
-    alternates: { canonical: `https://${username}.${process.env.NEXT_PUBLIC_ROOT_DOMAIN}` },
+    alternates: { canonical: websiteUrl(username) },
     openGraph: {
       title,
       description: seoDesc ?? "",

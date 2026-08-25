@@ -31,7 +31,7 @@ export function WebsiteCustomizer({
   sections: initialSections,
   themes,
   username,
-  rootDomain,
+  siteUrl,
   isLocalhost,
   plan,
 }: {
@@ -39,7 +39,7 @@ export function WebsiteCustomizer({
   sections: WebsiteSectionRow[];
   themes: TemplateRow[];
   username: string;
-  rootDomain: string;
+  siteUrl: string;
   isLocalhost: boolean;
   plan: string;
 }) {
@@ -121,7 +121,7 @@ export function WebsiteCustomizer({
   const hostUrl =
     typeof window !== "undefined" && isLocalhost
       ? `http://${username}.lvh.me:${window.location.port}`
-      : `https://${website?.subdomain ?? username}.${rootDomain}`;
+      : siteUrl;
 
   async function save() {
     setBusy(true);

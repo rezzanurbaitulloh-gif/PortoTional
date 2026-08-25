@@ -1,3 +1,4 @@
+import { websiteUrl } from "@/lib/app-url";
 import { getCurrentProfile, getPlan } from "@/services/identity";
 import { getWebsiteForOwner } from "@/actions/website";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
@@ -35,9 +36,7 @@ export default async function ShowcaseWebsitePage() {
         sections={(sections ?? []) as WebsiteSectionRow[]}
         themes={(themes ?? []) as TemplateRow[]}
         username={profile.username}
-        rootDomain={
-          process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "portotional.com"
-        }
+        siteUrl={websiteUrl(profile.username)}
         isLocalhost={(process.env.APP_URL ?? "").includes("localhost")}
         plan={plan}
       />

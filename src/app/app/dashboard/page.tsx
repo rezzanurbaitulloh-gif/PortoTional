@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/shared/empty-state";
+import { websiteUrl, websiteDisplayHost } from "@/lib/app-url";
 import type { ResumeRow, WebsiteRow } from "@/types/database";
 import type { ExperienceRow } from "@/types/database";
 
@@ -211,12 +212,12 @@ export default async function DashboardPage() {
             {website?.published ? (
               <>
                 <a
-                  href={`https://${website.subdomain}.${process.env.NEXT_PUBLIC_ROOT_DOMAIN}`}
+                  href={websiteUrl(website.subdomain)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block truncate rounded-md px-2 py-1.5 font-mono text-xs text-gold hover:bg-white/5"
                 >
-                  {website.subdomain}.{process.env.NEXT_PUBLIC_ROOT_DOMAIN}
+                  {websiteDisplayHost(website.subdomain)}
                 </a>
                 <p className="px-2 pt-2 text-xs text-success">Published</p>
               </>
