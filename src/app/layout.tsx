@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { appUrl } from "@/lib/app-url";
 import { Inter, Source_Serif_4 } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
@@ -10,7 +11,7 @@ const display = Source_Serif_4({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.APP_URL ?? "http://localhost:3000"),
+  metadataBase: new URL(appUrl()),
   title: {
     default: "PortoTional — Setup Once, Showcase Everywhere",
     template: "%s · PortoTional",

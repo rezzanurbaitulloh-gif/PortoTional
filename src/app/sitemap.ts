@@ -1,10 +1,11 @@
 import type { MetadataRoute } from "next";
 import { supabaseAdmin } from "@/lib/supabase/public";
+import { appUrl } from "@/lib/app-url";
 
 export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const base = process.env.APP_URL ?? "http://localhost:3000";
+  const base = appUrl();
   const entries: MetadataRoute.Sitemap = [
     { url: base, changeFrequency: "weekly", priority: 1 },
     { url: `${base}/pricing`, changeFrequency: "monthly", priority: 0.5 },

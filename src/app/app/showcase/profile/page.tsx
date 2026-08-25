@@ -1,10 +1,11 @@
 import { requireCurrentProfile } from "@/services/identity";
+import { appUrl } from "@/lib/app-url";
 import { ProfileVisibilityPanel } from "@/features/profile/visibility-panel";
 import QRCode from "qrcode";
 
 export default async function ShowcaseProfilePage() {
   const profile = await requireCurrentProfile();
-  const baseUrl = process.env.APP_URL ?? "http://localhost:3000";
+  const baseUrl = appUrl();
   const publicUrl = `${baseUrl}/u/${profile.username}`;
   const resumeUrl = `${baseUrl}/api/public-resume/${profile.username}`;
   const websiteUrl = `https://${profile.username}.${process.env.NEXT_PUBLIC_ROOT_DOMAIN}`;
