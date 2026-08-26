@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { MapPin, Search, Sparkles } from "lucide-react";
+import { MapPin, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Logo } from "@/components/layout/logo";
 import { supabaseAdmin } from "@/lib/supabase/public";
+import { isFeatureEnabled } from "@/lib/feature-flags";
+import { Sparkles } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Discover Professionals",
@@ -34,6 +36,10 @@ export default async function DiscoverPage({
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
   const sp = await searchParams;
+
+  // §78 — feature_discover gates this page (never authorization).
+  const discoverEnabled = await isFeatureEnabled("feature_discover");
+
   const q = (sp.q ?? "").slice(0, 80);
   const location = (sp.location ?? "").slice(0, 60);
   const skill = (sp.skill ?? "").slice(0, 60);
@@ -79,6 +85,18 @@ export default async function DiscoverPage({
       </header>
 
       <main className="mx-auto max-w-5xl px-4 py-10">
+        {!discoverEnabled ? (
+          <div className="rounded-xl border border-line bg-surface p-10 text-center">
+            <Search className="mx-auto h-8 w-8 text-gold" aria-hidden />
+            <p className="mt-4 text-sm font-medium text-ivory">
+              Discovery is temporarily unavailable.
+            </p>
+            <p className="mt-1 text-xs text-muted">
+              Public profiles are still accessible via their direct links.
+            </p>
+          </div>
+        ) : (
+        <>
         <h1 className="text-3xl font-semibold tracking-tight text-ivory">
           Discover Professionals
         </h1>
@@ -206,6 +224,8 @@ export default async function DiscoverPage({
               <Link href="/signup">Create your profile</Link>
             </Button>
           </div>
+        )}
+        </>
         )}
       </main>
     </div>
