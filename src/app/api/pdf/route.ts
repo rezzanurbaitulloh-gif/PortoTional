@@ -23,7 +23,7 @@ function iso(d: string | null): string | null {
 export async function POST(req: NextRequest) {
   try {
     await requireUser();
-    const body = (await req.json()) as { resumeId?: string };
+    const body = (await req.json()) as { resumeId?: string; pageSize?: string };
     if (!body.resumeId) {
       return NextResponse.json({ error: "resumeId is required." }, { status: 400 });
     }
@@ -53,7 +53,9 @@ export async function POST(req: NextRequest) {
     }
 
     const doc: ResumeDoc = {
-      pageSize: snapshot.resume.page_size,
+      pageSize: (["A4", "F4", "LETTER"].includes(body.pageSize ?? "")
+        ? body.pageSize
+        : snapshot.resume.page_size) as "A4" | "F4" | "LETTER",
       accentColor: snapshot.resume.settings?.accentColor ?? "#0B0C10",
       showPhoto: snapshot.resume.settings?.showPhoto ?? true,
       fontScale: snapshot.resume.settings?.fontScale ?? 1,
