@@ -146,6 +146,8 @@ export async function POST(req: NextRequest) {
       {
         error:
           "Your CV was saved, but PDF generation failed. You can retry without losing your changes.",
+        // Temporary diagnostics — remove after PDF production issue is resolved.
+        detail: String((err as Error)?.message ?? err).slice(0, 200),
       },
       { status: 502 },
     );
