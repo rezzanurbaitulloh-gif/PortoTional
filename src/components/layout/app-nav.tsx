@@ -155,22 +155,24 @@ export function UserMenu({
         ) : null}
         <DropdownMenuSeparator />
         <SignOutItem />
+        <SignOutItem allDevices />
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
 
-function SignOutItem() {
+function SignOutItem({ allDevices = false }: { allDevices?: boolean }) {
   const router = useRouter();
   return (
     <DropdownMenuItem
       onSelect={async () => {
         const supabase = getSupabaseBrowserClient();
-        await supabase.auth.signOut();
+        // §20 session management — global scope revokes every refresh token.
+        await supabase.auth.signOut(allDevices ? { scope: "global" } : undefined);
         router.push("/");
       }}
     >
-      Sign out
+      {allDevices ? "Sign out of all devices" : "Sign out"}
     </DropdownMenuItem>
   );
 }

@@ -224,6 +224,16 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
                   mode === "signup" ? "At least 8 characters" : "Your password"
                 }
               />
+              {mode === "login" ? (
+                <p className="text-right">
+                  <Link
+                    href="/forgot-password"
+                    className="text-xs text-gold hover:underline"
+                  >
+                    Forgot password?
+                  </Link>
+                </p>
+              ) : null}
             </div>
 
             {error ? (
