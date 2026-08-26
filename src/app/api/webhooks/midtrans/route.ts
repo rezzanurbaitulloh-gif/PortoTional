@@ -74,9 +74,23 @@ export async function POST(req: NextRequest) {
     await grantProSubscription(payment.user_id);
     await notifyUser({
       userId: payment.user_id,
-      type: "billing",
-      title: "Pro is active",
-      body: "Your PortoTional Pro subscription is now active. Enjoy premium templates, your personal website and advanced AI.",
+      type: "payment",
+      title: "Payment successful — Pro is active",
+      body: "Your PortoTional Pro subscription is now active. Premium templates, personal website and advanced AI are unlocked.",
+      actionUrl: "/app/settings",
+      entityId: payment.id,
+    });
+  }
+
+  if (["deny", "cancel", "expire"].includes(d.transaction_status)) {
+    await notifyUser({
+      userId: payment.user_id,
+      type: "payment",
+      title:
+        d.transaction_status === "deny" ? "Payment failed" : "Payment cancelled",
+      body: `Your payment (${d.order_id}) was ${d.transaction_status}. You can retry anytime from Settings.`,
+      actionUrl: "/app/settings",
+      entityId: payment.id,
     });
   }
 

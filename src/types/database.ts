@@ -29,6 +29,7 @@ export interface ProfileRow {
   availability: "open_to_work" | "open_to_opportunities" | "not_available";
   availability_message: string | null;
   visibility: Visibility;
+  notification_prefs: Record<string, boolean>;
   onboarding_completed: boolean;
   is_admin: boolean;
   created_at: string;
@@ -262,6 +263,8 @@ export interface NotificationRow {
   title: string;
   body: string;
   read_at: string | null;
+  action_url: string | null;
+  entity_id: string | null;
   created_at: string;
 }
 
@@ -331,4 +334,33 @@ export interface MasterIdentityBundle {
   languages: LanguageRow[];
   socialLinks: SocialLinkRow[];
   profession: ProfessionRow | null;
+}
+
+export interface ReportRow {
+  id: string;
+  reporter_user_id: string | null;
+  target_type: "profile" | "website";
+  target_username: string;
+  reason:
+    | "inappropriate_content"
+    | "impersonation"
+    | "spam"
+    | "fake_information"
+    | "other";
+  details: string;
+  status: "open" | "reviewing" | "resolved" | "dismissed";
+  resolution_note: string;
+  reviewed_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AuditLogRow {
+  id: number;
+  actor_user_id: string | null;
+  action: string;
+  entity_type: string | null;
+  entity_id: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
 }

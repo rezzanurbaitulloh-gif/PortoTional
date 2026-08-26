@@ -5,10 +5,11 @@ import { z } from "zod";
 import { getSupabaseServerClient, requireUser } from "@/lib/supabase/server";
 import { requireCurrentProfile, getPlan, getIdentityBundle } from "@/services/identity";
 import { planLimits } from "@/lib/constants";
-import { logAudit } from "@/services/audit";
+import { logAudit, notifyUser } from "@/services/audit";
 import { aiChat } from "@/lib/ai/gateway";
 import { websiteSuggestMessages } from "@/lib/ai/prompts";
 import { rateLimit } from "@/lib/ai/rate-limit";
+import { websiteUrl } from "@/lib/app-url";
 import type { WebsiteRow, WebsiteSectionRow } from "@/types/database";
 
 export async function getWebsiteForOwner(): Promise<{
@@ -190,6 +191,15 @@ export async function togglePublishAction(
       action: publish ? "website.publish" : "website.unpublish",
       entityType: "website",
     });
+    if (publish) {
+      await notifyUser({
+        userId: user.id,
+        type: "website",
+        title: "Your website is live",
+        body: `Your personal website is now public at ${websiteUrl(profile.username)}.`,
+        actionUrl: "/app/showcase/website",
+      });
+    }
     revalidatePath("/app/showcase/website");
     revalidatePath("/sites");
     return { ok: true };

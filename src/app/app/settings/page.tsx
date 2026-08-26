@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { UpgradeButton } from "@/features/payments/upgrade-button";
+import { DataManagement } from "@/features/settings/data-management";
+import { NotificationPrefs } from "@/features/settings/notification-prefs";
 import type { PaymentRow } from "@/types/database";
 
 export const metadata = { title: "Settings" };
@@ -134,12 +136,45 @@ export default async function SettingsPage() {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm">Billing &amp; Data</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <div>
+            <p className="text-sm font-medium text-ivory">Transactions</p>
+            <p className="mt-0.5 text-xs text-muted">
+              Payment history, status and invoices.
+            </p>
+            <Button asChild variant="outline" size="sm" className="mt-2">
+              <Link href="/app/billing">Billing &amp; Transactions →</Link>
+            </Button>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-ivory">Notifications</p>
+            <p className="mt-0.5 mb-3 text-xs text-muted">
+              Choose which in-app notifications you receive.
+            </p>
+            <NotificationPrefs initial={profile.notification_prefs ?? {}} />
+          </div>
+          <DataManagement />
+        </CardContent>
+      </Card>
+
       <p className="text-center text-xs text-muted">
-        Danger zone:{" "}
-        <Link href="/app/settings#delete" className="underline hover:text-danger">
-          delete account
+        Read our{" "}
+        <Link href="/legal/terms" className="underline hover:text-ivory">
+          Terms
+        </Link>
+        ,{" "}
+        <Link href="/legal/privacy" className="underline hover:text-ivory">
+          Privacy Policy
         </Link>{" "}
-        — contact support@portotional.com.
+        and{" "}
+        <Link href="/legal/ai-usage" className="underline hover:text-ivory">
+          AI usage disclaimer
+        </Link>
+        .
       </p>
     </div>
   );

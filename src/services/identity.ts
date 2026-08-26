@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { redirect } from "next/navigation";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import type {
   MasterIdentityBundle,
@@ -65,4 +66,15 @@ export async function getIdentityBundle(
     languages: languages.data ?? [],
     socialLinks: socialLinks.data ?? [],
   };
+}
+
+export async function requireAdmin(): Promise<ProfileRow> {
+  const profile = await getCurrentProfile();
+  if (!profile?.is_admin) redirect("/app/dashboard");
+  return profile;
+}
+
+export async function isAdmin(): Promise<boolean> {
+  const profile = await getCurrentProfile();
+  return Boolean(profile?.is_admin);
 }

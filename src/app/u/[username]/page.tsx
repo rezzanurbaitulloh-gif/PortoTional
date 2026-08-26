@@ -12,6 +12,7 @@ import { Logo } from "@/components/layout/logo";
 import { Badge } from "@/components/ui/badge";
 import { PublicTracker, TrackedExternalLink } from "@/features/website/public-tracker";
 import { DownloadCtaButton } from "@/features/profile/download-cta";
+import { ReportProfileDialog } from "@/features/profile/report-dialog";
 import type { PublicProfileData } from "@/types/database";
 
 export const revalidate = 60;
@@ -296,6 +297,9 @@ export default async function PublicProfilePage({
 
         <footer className="mt-14 border-t border-line pt-6 text-center">
           <DownloadCtaButton username={username} websiteId={website?.id ?? null} />
+          <div className="mt-3">
+            <ReportProfileDialog username={username} />
+          </div>
           {website?.published ? (
             <p className="mt-3 text-xs text-muted">
               Personal site:{" "}

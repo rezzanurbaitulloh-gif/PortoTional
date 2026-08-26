@@ -21,19 +21,43 @@ export async function logAudit(input: {
   }
 }
 
+const CATEGORY_BY_TYPE: Record<string, string> = {
+  payment: "payments",
+  subscription: "payments",
+  cv: "cv",
+  website: "profile",
+  profile: "profile",
+  system: "system",
+};
+
 export async function notifyUser(input: {
   userId: string;
   type: string;
   title: string;
   body?: string;
+  actionUrl?: string;
+  entityId?: string;
 }) {
   try {
     const admin = getSupabaseAdminClient();
+
+    // §35 — respect the user's in-app notification preferences.
+    const { data: prof } = await admin
+      .from("profiles")
+      .select("notification_prefs")
+      .eq("user_id", input.userId)
+      .maybeSingle();
+    const prefs = (prof?.notification_prefs ?? {}) as Record<string, boolean>;
+    const category = CATEGORY_BY_TYPE[input.type] ?? "system";
+    if (prefs[category] === false) return;
+
     await admin.from("notifications").insert({
       user_id: input.userId,
       type: input.type,
       title: input.title,
       body: input.body ?? "",
+      action_url: input.actionUrl ?? null,
+      entity_id: input.entityId ?? null,
     });
   } catch (err) {
     console.error("[notify]", err);

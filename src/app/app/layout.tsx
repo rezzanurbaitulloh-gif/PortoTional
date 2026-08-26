@@ -7,11 +7,14 @@ import {
   Globe,
   LayoutDashboard,
   MonitorSmartphone,
+  Search,
   Settings,
+  ShieldCheck,
   Sparkles,
 } from "lucide-react";
 import { Logo } from "@/components/layout/logo";
 import { NotificationsBell, UserMenu } from "@/components/layout/app-nav";
+import { ThemeToggle } from "@/components/theme-provider";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getCurrentProfile, getPlan } from "@/services/identity";
 import type { NotificationRow, ProfileRow } from "@/types/database";
@@ -25,10 +28,13 @@ const icons = {
   MonitorSmartphone,
   BarChart3,
   Settings,
+  Search,
+  ShieldCheck,
 } as const;
 
 const NAV = [
   { href: "/app/dashboard", label: "Dashboard", icon: "LayoutDashboard" },
+  { href: "/discover", label: "Discover", icon: "Search" },
   { href: "/app/identity", label: "Identity", icon: "Fingerprint" },
   { href: "/app/cv", label: "My CVs", icon: "FileText" },
   { href: "/app/ai", label: "AI Studio", icon: "Sparkles" },
@@ -36,6 +42,7 @@ const NAV = [
   { href: "/app/showcase/website", label: "Website", icon: "MonitorSmartphone" },
   { href: "/app/analytics", label: "Analytics", icon: "BarChart3" },
   { href: "/app/settings", label: "Settings", icon: "Settings" },
+  { href: "/app/admin/users", label: "Admin", icon: "ShieldCheck" },
 ] as const;
 
 export default async function AppLayout({
@@ -70,7 +77,7 @@ export default async function AppLayout({
           </Link>
         </div>
         <nav className="flex-1 space-y-1 px-3" aria-label="Application">
-          {NAV.map((item) => (
+          {NAV.filter((item) => item.icon !== "ShieldCheck" || profile.is_admin).map((item) => (
             <Link
               key={item.href}
               href={item.href}
@@ -123,6 +130,7 @@ export default async function AppLayout({
             </span>
           </div>
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             <NotificationsBell />
             <UserMenu username={profile.username} email={user.email ?? ""} />
           </div>

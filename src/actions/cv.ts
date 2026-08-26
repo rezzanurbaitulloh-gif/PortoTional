@@ -9,7 +9,7 @@ import {
   getIdentityBundle,
 } from "@/services/identity";
 import { planLimits } from "@/lib/constants";
-import { logAudit } from "@/services/audit";
+import { logAudit, notifyUser } from "@/services/audit";
 import { aiChat } from "@/lib/ai/gateway";
 import { cvGenerateMessages } from "@/lib/ai/prompts";
 import { rateLimit } from "@/lib/ai/rate-limit";
@@ -565,6 +565,14 @@ export async function generateResumeAction(
     await logAudit({
       actorUserId: user.id,
       action: "cv.generate_ai",
+      entityId: resume.id,
+    });
+    await notifyUser({
+      userId: user.id,
+      type: "cv",
+      title: "Your AI-generated CV is ready",
+      body: `"${parsed.data.name}" was created from your Master Identity${summaryText ? " with an AI-drafted summary" : ""}.`,
+      actionUrl: `/app/cv/${resume.id}`,
       entityId: resume.id,
     });
     revalidatePath("/app/cv");

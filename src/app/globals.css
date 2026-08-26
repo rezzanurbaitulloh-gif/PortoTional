@@ -20,8 +20,28 @@
   --font-display: var(--font-display), Georgia, serif;
 }
 
+@custom-variant light (&:where(html.light, html.light *));
+
+/* §30 — Light mode remaps the SAME design tokens; one UI, two palettes. */
+html.light {
+  --color-obsidian: #f6f7f9;
+  --color-obsidian-raised: #fbfcfd;
+  --color-surface: #ffffff;
+  --color-surface-2: #eef1f5;
+  --color-line: #dde3ea;
+  --color-line-strong: #b9c3cf;
+  --color-ivory: #0b0c10;
+  --color-ivory-dim: #38404d;
+  --color-muted: #5f6b7a;
+  --color-gold-deep: #8a6c14;
+}
+
 html {
   color-scheme: dark;
+}
+
+html.light {
+  color-scheme: light;
 }
 
 body {
