@@ -121,3 +121,98 @@ export async function resolveReportAction(input: unknown): Promise<{
     return { ok: false, error: "Failed to update the report." };
   }
 }
+
+const GRANT_SCHEMA = z.object({
+  userId: uuid,
+  months: z.coerce.number().int().min(1).max(120),
+  reason: z.string().min(3).max(300),
+});
+
+/** §19/§23 — manual Pro grant via entitlement records. Never touches payments. */
+export async function grantProAction(input: unknown): Promise<{
+  ok: boolean;
+  error?: string;
+}> {
+  try {
+    const adminProfile = await requireAdmin();
+    const { roleHasPermission } = await import("@/lib/permissions");
+    if (!roleHasPermission(adminProfile.role ?? "USER", "entitlement.grant")) {
+      return { ok: false, error: "Not permitted." };
+    }
+    const parsed = GRANT_SCHEMA.safeParse(input);
+    if (!parsed.success) {
+      return { ok: false, error: "Months (1–120) and a reason are required." };
+    }
+
+    const admin = getSupabaseAdminClient();
+    const now = new Date();
+    const end = new Date(now.getTime() + parsed.data.months * 30 * 24 * 3600 * 1000);
+
+    await admin.from("subscriptions").upsert({
+      user_id: parsed.data.userId,
+      provider: "manual_grant",
+      provider_subscription_id: `grant-${adminProfile.user_id.slice(0, 8)}-${now.getTime()}`,
+      plan: "pro",
+      status: "active",
+      current_period_start: now.toISOString(),
+      current_period_end: end.toISOString(),
+    });
+    for (const feature of ["premium_website", "advanced_ai", "analytics", "multiple_cv", "premium_templates"]) {
+      await admin.from("entitlements").upsert(
+        { user_id: parsed.data.userId, feature, value: true },
+        { onConflict: "user_id,feature" },
+      );
+    }
+
+    await logAudit({
+      actorUserId: adminProfile.user_id,
+      action: "admin.grant_pro",
+      entityType: "user",
+      entityId: parsed.data.userId,
+      reason: parsed.data.reason,
+      beforeState: null,
+      afterState: { plan: "pro", months: parsed.data.months, until: end.toISOString() },
+    });
+    revalidatePath("/app/admin/users");
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "Failed to grant Pro." };
+  }
+}
+
+export async function revokeProAction(input: unknown): Promise<{
+  ok: boolean;
+  error?: string;
+}> {
+  try {
+    const adminProfile = await requireAdmin();
+    const { roleHasPermission } = await import("@/lib/permissions");
+    if (!roleHasPermission(adminProfile.role ?? "USER", "entitlement.revoke")) {
+      return { ok: false, error: "Not permitted." };
+    }
+    const parsed = z
+      .object({ userId: uuid, reason: z.string().min(3).max(300) })
+      .safeParse(input);
+    if (!parsed.success) return { ok: false, error: "A reason is required." };
+
+    const admin = getSupabaseAdminClient();
+    await admin
+      .from("subscriptions")
+      .update({ plan: "free", status: "canceled" })
+      .eq("user_id", parsed.data.userId);
+    await admin.from("entitlements").delete().eq("user_id", parsed.data.userId);
+
+    await logAudit({
+      actorUserId: adminProfile.user_id,
+      action: "admin.revoke_pro",
+      entityType: "user",
+      entityId: parsed.data.userId,
+      reason: parsed.data.reason,
+      afterState: { plan: "free" },
+    });
+    revalidatePath("/app/admin/users");
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "Failed to revoke Pro." };
+  }
+}

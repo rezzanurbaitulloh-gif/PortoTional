@@ -369,8 +369,80 @@ function ShowcaseForm({
   onCancel: () => void;
 }) {
   const [f, setF] = useState<FormState>(initial);
+  const [aiBusy, setAiBusy] = useState(false);
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setF((prev) => ({ ...prev, [k]: v }));
+
+  // §12 — AI assists writing; facts come only from what the user typed.
+  async function runAi(kind: "description" | "case_study") {
+    if (!f.title.trim()) {
+      toast.error("Add a title first so the AI knows the subject.");
+      return;
+    }
+    setAiBusy(true);
+    try {
+      const res = await fetch("/api/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          kind === "description"
+            ? {
+                action: "project_description",
+                title: f.title,
+                type: f.type,
+                rawNotes: [
+                  f.full_description,
+                  f.role && `role: ${f.role}`,
+                  f.organization && `organization: ${f.organization}`,
+                  f.results_impact && `results: ${f.results_impact}`,
+                ]
+                  .filter(Boolean)
+                  .join("\n"),
+              }
+            : {
+                action: "case_study",
+                showcase: {
+                  title: f.title,
+                  shortDescription: f.short_description,
+                  fullDescription: f.full_description,
+                  role: f.role,
+                  organization: f.organization,
+                  resultsImpact: f.results_impact,
+                },
+              },
+        ),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      const parsed =
+        typeof data.text === "string" ? JSON.parse(data.text) : data.text;
+      if (kind === "description") {
+        setF((prev) => ({
+          ...prev,
+          short_description: parsed.shortDescription ?? prev.short_description,
+          full_description: parsed.fullDescription ?? prev.full_description,
+          results_impact:
+            parsed.resultsImpact || prev.results_impact,
+        }));
+      } else {
+        set("caseStudyOpen", true);
+        setF((prev) => ({
+          ...prev,
+          cs_problem: parsed.problem ?? "",
+          cs_goals: parsed.goals ?? "",
+          cs_process: parsed.process ?? "",
+          cs_solution: parsed.solution ?? "",
+          cs_features: parsed.features ?? "",
+          cs_lessons: parsed.lessons ?? "",
+        }));
+      }
+      toast.success("AI draft applied — review before saving.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "AI request failed.");
+    } finally {
+      setAiBusy(false);
+    }
+  }
 
   return (
     <form
@@ -411,7 +483,19 @@ function ShowcaseForm({
       </div>
 
       <div>
-        <Label htmlFor="sc-short">Short description</Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="sc-short">Short description</Label>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={aiBusy}
+            onClick={() => runAi("description")}
+          >
+            {aiBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+            AI write
+          </Button>
+        </div>
         <Input
           id="sc-short"
           value={f.short_description}
@@ -526,11 +610,25 @@ function ShowcaseForm({
           <Label htmlFor="sc-cs" className="text-sm font-medium text-ivory">
             Case study mode
           </Label>
-          <Switch
-            id="sc-cs"
-            checked={f.caseStudyOpen}
-            onCheckedChange={(v) => set("caseStudyOpen", v)}
-          />
+          <div className="flex items-center gap-2">
+            {f.caseStudyOpen ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={aiBusy}
+                onClick={() => runAi("case_study")}
+              >
+                {aiBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                AI structure
+              </Button>
+            ) : null}
+            <Switch
+              id="sc-cs"
+              checked={f.caseStudyOpen}
+              onCheckedChange={(v) => set("caseStudyOpen", v)}
+            />
+          </div>
         </div>
         {f.caseStudyOpen ? (
           <div className="mt-3 grid gap-3">

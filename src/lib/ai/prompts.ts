@@ -120,3 +120,31 @@ export function careerMessages(history: AiMessage[]): AiMessage[] {
     ...history.slice(-12),
   ];
 }
+
+export function projectDescriptionMessages(
+  identityContext: unknown,
+  showcaseInput: { title: string; type: string; rawNotes?: string },
+): AiMessage[] {
+  return [
+    {
+      role: "system",
+      content: `${TRUTH_GUARD}\nWrite professional copy for a ${showcaseInput.type} titled "${showcaseInput.title}". Return strict JSON: {"shortDescription": string (max 200 chars, one compelling line), "fullDescription": string (2-4 sentences), "resultsImpact": string (only if results are stated in the input, else "")}. Use ONLY facts present in the provided data${showcaseInput.rawNotes ? " and the user's raw notes" : ""}.`,
+    },
+    {
+      role: "user",
+      content: JSON.stringify({ identity: identityContext, notes: showcaseInput.rawNotes ?? "" }).slice(0, 10000),
+    },
+  ];
+}
+
+export function caseStudyMessages(
+  showcaseData: unknown,
+): AiMessage[] {
+  return [
+    {
+      role: "system",
+      content: `${TRUTH_GUARD}\nStructure the provided showcase data into case-study sections. Return strict JSON: {"problem": string, "goals": string, "process": string, "solution": string, "features": string, "lessons": string}. Each field 1-3 sentences. If information for a section is missing, use an empty string — never invent details.`,
+    },
+    { role: "user", content: JSON.stringify(showcaseData).slice(0, 10000) },
+  ];
+}

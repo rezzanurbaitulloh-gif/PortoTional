@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { SuspendButton } from "./suspend-button";
+import { EntitlementButtons } from "./entitlement-buttons";
 
 export const metadata: Metadata = { title: "Admin · Users" };
 
@@ -38,6 +39,23 @@ export default async function AdminUsersPage({
     perPage,
   });
   let users = (data?.users ?? []) as unknown as AdminUserRow[];
+
+  const planRes = await admin
+    .from("subscriptions")
+    .select("user_id, plan, status")
+    .in("user_id", [
+      ...new Set(
+        ((data?.users ?? []) as unknown as AdminUserRow[]).map((u) => u.id),
+      ),
+    ].length
+      ? [...new Set(((data?.users ?? []) as unknown as AdminUserRow[]).map((u) => u.id))]
+      : ["00000000-0000-0000-0000-000000000000"]);
+  const proUsers = new Set(
+    (planRes.data ?? [])
+      .filter((x: { plan: string; status: string }) => x.plan === "pro" && x.status === "active")
+      .map((x: { user_id: string }) => x.user_id),
+  );
+
   if (q) {
     const needle = q.toLowerCase();
     users = users.filter(
@@ -100,10 +118,13 @@ export default async function AdminUsersPage({
                     )}
                   </td>
                   <td className="py-2.5">
-                    <SuspendButton
-                      userId={u.id}
-                      suspended={Boolean(u.banned_until)}
-                    />
+                    <div className="flex flex-wrap items-center gap-2">
+                      <EntitlementButtons userId={u.id} hasPro={proUsers.has(u.id)} />
+                      <SuspendButton
+                        userId={u.id}
+                        suspended={Boolean(u.banned_until)}
+                      />
+                    </div>
                   </td>
                 </tr>
               ))}

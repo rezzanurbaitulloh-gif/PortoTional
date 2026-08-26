@@ -9,6 +9,8 @@ import {
   tailorMessages,
   translateMessages,
   careerMessages,
+  projectDescriptionMessages,
+  caseStudyMessages,
 } from "@/lib/ai/prompts";
 import { rateLimit } from "@/lib/ai/rate-limit";
 import { getPlan } from "@/services/identity";
@@ -38,6 +40,16 @@ const actionSchema = z.discriminatedUnion("action", [
     action: z.literal("translate"),
     text: z.string().min(1).max(4000),
     targetLanguage: z.string().max(40),
+  }),
+  z.object({
+    action: z.literal("project_description"),
+    title: z.string().min(1).max(120),
+    type: z.string().max(40).default("project"),
+    rawNotes: z.string().max(4000).default(""),
+  }),
+  z.object({
+    action: z.literal("case_study"),
+    showcase: z.record(z.string(), z.unknown()),
   }),
   z.object({
     action: z.literal("career"),
@@ -105,6 +117,21 @@ export async function POST(req: NextRequest) {
         break;
       case "translate":
         messages = translateMessages(parsed.data.text, parsed.data.targetLanguage);
+        break;
+      case "project_description":
+        jsonMode = true;
+        messages = projectDescriptionMessages(
+          { profileHint: "use only what is relevant", },
+          {
+            title: parsed.data.title,
+            type: parsed.data.type,
+            rawNotes: parsed.data.rawNotes,
+          },
+        );
+        break;
+      case "case_study":
+        jsonMode = true;
+        messages = caseStudyMessages(parsed.data.showcase);
         break;
       case "career":
         messages = careerMessages(parsed.data.messages);
