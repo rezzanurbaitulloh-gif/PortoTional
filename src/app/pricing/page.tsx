@@ -68,7 +68,7 @@ export default function PricingPage() {
                   "Everything in Free",
                   "Unlimited CVs",
                   "Premium CV templates (Executive Gold)",
-                  "Personal website at username.portotional.com",
+                  "Personal website at username.portotional.vercel.app",
                   "Website analytics (privacy-friendly)",
                   "Advanced AI: job tailoring & CV analysis",
                   "Priority support",

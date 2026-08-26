@@ -25,7 +25,7 @@ const FEATURES = [
     icon: Globe,
     title: "Public profile",
     description:
-      "portotional.com/u/username — a fast, SEO-optimized page that answers who you are in seconds.",
+      "/u/username on portotional.vercel.app — a fast, SEO-optimized page that answers who you are in seconds.",
   },
   {
     icon: Fingerprint,
@@ -49,7 +49,7 @@ const FEATURES = [
     icon: BarChart3,
     title: "Personal website (Pro)",
     description:
-      "username.portotional.com rendered by one engine, customizable without code.",
+      "username.portotional.vercel.app rendered by one engine, customizable without code.",
   },
 ];
 

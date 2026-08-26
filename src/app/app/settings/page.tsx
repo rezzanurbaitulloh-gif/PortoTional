@@ -71,7 +71,7 @@ export default async function SettingsPage() {
             <>
               <p className="text-sm text-muted">
                 Pro unlocks premium CV templates, your personal website at
-                username.portotional.com, analytics, unlimited CVs and advanced
+                your personal website subdomain, analytics, unlimited CVs and advanced
                 AI.
               </p>
               <UpgradeButton />

@@ -12,6 +12,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { appUrl } from "@/lib/app-url";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -300,7 +301,7 @@ export function OnboardingFlow({
               <Label htmlFor="ob-username">Public username</Label>
               <div className="mt-1.5 flex items-center gap-0">
                 <span className="rounded-l-md border border-r-0 border-line bg-surface-2 px-3 py-2 font-mono text-xs text-muted">
-                  portotional.com/u/
+                  {appUrl().replace(/^https?:\/\//, "")}/u/
                 </span>
                 <Input
                   id="ob-username"
