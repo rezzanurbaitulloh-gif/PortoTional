@@ -8,8 +8,6 @@ import {
   Code,
   Briefcase,
   FileText,
-  GripVertical,
-  Landmark,
   Loader2,
   Palette,
   PartyPopper,

@@ -42,6 +42,7 @@ export const PLAN_LIMITS = {
   free: {
     maxResumes: 2,
     maxShowcases: 5,
+    maxAssets: 25,
     aiPerHour: Number(process.env.AI_RATE_LIMIT_FREE_PER_HOUR ?? 30),
     premiumTemplates: false,
     websitePublish: false,
@@ -50,6 +51,7 @@ export const PLAN_LIMITS = {
   pro: {
     maxResumes: 50,
     maxShowcases: 100,
+    maxAssets: 1000,
     aiPerHour: Number(process.env.AI_RATE_LIMIT_PRO_PER_HOUR ?? 150),
     premiumTemplates: true,
     websitePublish: true,
