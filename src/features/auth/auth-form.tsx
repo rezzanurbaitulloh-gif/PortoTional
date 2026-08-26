@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, Mail } from "lucide-react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { Turnstile, turnstileEnabled } from "@/components/security/turnstile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -47,6 +48,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [oauthLoading, setOauthLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(
     searchParams.get("error") === "oauth"
@@ -64,11 +66,26 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
 
   async function handleEmailAuth(e: React.FormEvent) {
     e.preventDefault();
+    if (turnstileEnabled() && !turnstileToken) {
+      setError("Please complete the bot verification first.");
+      return;
+    }
     setLoading(true);
     setError(null);
     setMessage(null);
     const supabase = getSupabaseBrowserClient();
     try {
+      // §20 — server-side Turnstile verification (skipped when unconfigured).
+      if (turnstileEnabled()) {
+        const verifyRes = await fetch("/api/auth/verify-turnstile", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: turnstileToken }),
+        });
+        if (!verifyRes.ok) {
+          throw new Error("Bot verification failed. Please try again.");
+        }
+      }
       if (mode === "signup") {
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -178,6 +195,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
           </div>
 
           <form onSubmit={handleEmailAuth} className="grid gap-4">
+            <Turnstile onToken={setTurnstileToken} />
             <div className="grid gap-1.5">
               <Label htmlFor="email">Email</Label>
               <Input

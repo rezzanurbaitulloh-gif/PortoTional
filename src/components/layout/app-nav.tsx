@@ -112,24 +112,47 @@ export function NotificationsBell() {
 export function UserMenu({
   username,
   email,
+  isAdmin = false,
 }: {
   username: string;
   email: string;
+  isAdmin?: boolean;
 }) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-surface text-sm font-semibold text-gold">
+      <DropdownMenuTrigger
+        className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-surface text-sm font-semibold text-gold"
+        aria-label="Open profile menu"
+      >
         {(username || email || "?").slice(0, 1).toUpperCase()}
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuLabel>{email}</DropdownMenuLabel>
+      {/* §18 — workspace & admin entry points live in the Profile Menu. */}
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel>
+          <p className="truncate">{email}</p>
+          <p className="text-xs font-normal text-muted">@{username}</p>
+        </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <Link href={`/u/${username}`}>
+          <DropdownMenuItem>My Profile</DropdownMenuItem>
+        </Link>
+        <Link href="/app/dashboard">
+          <DropdownMenuItem>Dashboard</DropdownMenuItem>
+        </Link>
+        <Link href="/app/billing">
+          <DropdownMenuItem>Billing &amp; Plan</DropdownMenuItem>
+        </Link>
         <Link href="/app/settings">
           <DropdownMenuItem>Settings</DropdownMenuItem>
         </Link>
-        <Link href={`/u/${username}`} target="_blank">
-          <DropdownMenuItem>View public profile</DropdownMenuItem>
-        </Link>
+        {isAdmin ? (
+          <>
+            <DropdownMenuSeparator />
+            <Link href="/app/admin/users">
+              <DropdownMenuItem className="text-gold">Admin Console</DropdownMenuItem>
+            </Link>
+          </>
+        ) : null}
         <DropdownMenuSeparator />
         <SignOutItem />
       </DropdownMenuContent>

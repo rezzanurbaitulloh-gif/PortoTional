@@ -32,6 +32,8 @@ export interface ProfileRow {
   notification_prefs: Record<string, boolean>;
   onboarding_completed: boolean;
   is_admin: boolean;
+  role: "USER" | "SUPPORT" | "MODERATOR" | "ADMIN" | "SUPER_ADMIN";
+  verification_status: "unverified" | "verified" | "professionally_verified";
   created_at: string;
   updated_at: string;
 }

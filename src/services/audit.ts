@@ -6,12 +6,19 @@ export async function logAudit(input: {
   entityType?: string;
   entityId?: string;
   metadata?: Record<string, unknown>;
+  /** §22 — required for dangerous actions */
+  reason?: string;
+  beforeState?: Record<string, unknown> | null;
+  afterState?: Record<string, unknown> | null;
 }) {
   try {
     const admin = getSupabaseAdminClient();
     await admin.from("audit_logs").insert({
       actor_user_id: input.actorUserId,
       action: input.action,
+      reason: input.reason ?? "",
+      before_state: input.beforeState ?? null,
+      after_state: input.afterState ?? null,
       entity_type: input.entityType ?? "",
       entity_id: input.entityId ?? "",
       metadata: input.metadata ?? {},

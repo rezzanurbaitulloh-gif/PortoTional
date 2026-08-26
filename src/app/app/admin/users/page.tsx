@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Search, ShieldOff, RotateCcw } from "lucide-react";
+import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+import { SuspendButton } from "./suspend-button";
 
 export const metadata: Metadata = { title: "Admin · Users" };
 
@@ -121,32 +122,3 @@ export default async function AdminUsersPage({
   );
 }
 
-function SuspendButton({
-  userId,
-  suspended,
-}: {
-  userId: string;
-  suspended: boolean;
-}) {
-  return (
-    <form
-      action={async () => {
-        "use server";
-        const { setUserSuspendedAction } = await import("@/actions/admin");
-        await setUserSuspendedAction({ userId, suspended });
-      }}
-    >
-      <Button size="sm" variant={suspended ? "outline" : "secondary"} type="submit">
-        {suspended ? (
-          <>
-            <RotateCcw /> Restore
-          </>
-        ) : (
-          <>
-            <ShieldOff /> Suspend
-          </>
-        )}
-      </Button>
-    </form>
-  );
-}

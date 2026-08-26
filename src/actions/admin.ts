@@ -15,9 +15,19 @@ export async function setUserSuspendedAction(
   try {
     const adminProfile = await requireAdmin();
     const parsed = z
-      .object({ userId: uuid, suspended: z.boolean() })
+      .object({
+        userId: uuid,
+        suspended: z.boolean(),
+        /** §22 — dangerous actions require a recorded reason. */
+        reason: z.string().min(3).max(300),
+      })
       .safeParse(input);
-    if (!parsed.success) return { ok: false, error: "Invalid input." };
+    if (!parsed.success) {
+      return {
+        ok: false,
+        error: "A reason (3–300 chars) is required for this action.",
+      };
+    }
     if (parsed.data.userId === adminProfile.user_id) {
       return { ok: false, error: "You cannot suspend your own account." };
     }
@@ -30,6 +40,9 @@ export async function setUserSuspendedAction(
       return { ok: false, error: "User not found." };
     }
 
+    const before = {
+      banned_until: userData.user.banned_until ?? null,
+    };
     const { error } = await admin.auth.admin.updateUserById(
       parsed.data.userId,
       { ban_duration: parsed.data.suspended ? "876000h" : "none" },
@@ -41,6 +54,13 @@ export async function setUserSuspendedAction(
       action: parsed.data.suspended ? "admin.suspend_user" : "admin.restore_user",
       entityType: "user",
       entityId: parsed.data.userId,
+      reason: parsed.data.reason,
+      beforeState: before,
+      afterState: {
+        banned_until: parsed.data.suspended
+          ? new Date(Date.now() + 876000 * 3600 * 1000).toISOString()
+          : null,
+      },
     });
     if (parsed.data.suspended) {
       await notifyUser({
@@ -71,6 +91,10 @@ export async function resolveReportAction(input: unknown): Promise<{
       })
       .safeParse(input);
     if (!parsed.success) return { ok: false, error: "Invalid input." };
+    // Resolution notes double as the §22 audit reason.
+    const reason =
+      parsed.data.note ||
+      `Report ${parsed.data.reportId.slice(0, 8)} ${parsed.data.status}`;
 
     const supabase = await getSupabaseServerClient();
     const { error } = await supabase
@@ -88,6 +112,8 @@ export async function resolveReportAction(input: unknown): Promise<{
       action: `admin.report_${parsed.data.status}`,
       entityType: "report",
       entityId: parsed.data.reportId,
+      reason,
+      afterState: { status: parsed.data.status },
     });
     revalidatePath("/app/admin/reports");
     return { ok: true };

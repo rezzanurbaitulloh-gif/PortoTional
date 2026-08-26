@@ -69,12 +69,37 @@ export async function getIdentityBundle(
 }
 
 export async function requireAdmin(): Promise<ProfileRow> {
-  const profile = await getCurrentProfile();
-  if (!profile?.is_admin) redirect("/app/dashboard");
-  return profile;
+  return requirePermission("users.read");
 }
 
 export async function isAdmin(): Promise<boolean> {
   const profile = await getCurrentProfile();
   return Boolean(profile?.is_admin);
+}
+
+export async function getCurrentRole(): Promise<string> {
+  const profile = await getCurrentProfile();
+  return profile?.role ?? "USER";
+}
+
+/** §4 Authorization Architecture — centralized, server-side. */
+export async function requirePermission(
+  permission: import("@/lib/permissions").Permission,
+): Promise<ProfileRow> {
+  const profile = await getCurrentProfile();
+  if (!profile) redirect("/login");
+  const { roleHasPermission } = await import("@/lib/permissions");
+  if (!roleHasPermission(profile.role ?? "USER", permission)) {
+    redirect("/app/dashboard");
+  }
+  return profile;
+}
+
+export async function hasPermission(
+  permission: import("@/lib/permissions").Permission,
+): Promise<boolean> {
+  const profile = await getCurrentProfile();
+  if (!profile) return false;
+  const { roleHasPermission } = await import("@/lib/permissions");
+  return roleHasPermission(profile.role ?? "USER", permission);
 }

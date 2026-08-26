@@ -132,7 +132,7 @@ export default async function AppLayout({
           <div className="flex items-center gap-3">
             <ThemeToggle />
             <NotificationsBell />
-            <UserMenu username={profile.username} email={user.email ?? ""} />
+            <UserMenu username={profile.username} email={user.email ?? ""} isAdmin={profile.is_admin} />
           </div>
         </header>
 

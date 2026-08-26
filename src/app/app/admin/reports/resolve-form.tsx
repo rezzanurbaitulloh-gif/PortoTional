@@ -36,10 +36,21 @@ export function ResolveReportForm({ reportId }: { reportId: string }) {
       <Button size="sm" variant="outline" disabled={busy} onClick={() => run("reviewing")}>
         <Eye /> Reviewing
       </Button>
-      <Button size="sm" variant="secondary" disabled={busy} onClick={() => run("dismissed")}>
+      <Button
+        size="sm"
+        variant="secondary"
+        disabled={busy || note.trim().length < 3}
+        title="A short reason is required to dismiss"
+        onClick={() => run("dismissed")}
+      >
         <X /> Dismiss
       </Button>
-      <Button size="sm" disabled={busy} onClick={() => run("resolved")}>
+      <Button
+        size="sm"
+        disabled={busy || note.trim().length < 3}
+        title="A short reason is required to resolve"
+        onClick={() => run("resolved")}
+      >
         <Check /> Resolve
       </Button>
     </div>
