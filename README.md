@@ -11,35 +11,13 @@ website personal.
 - Tailwind CSS v4 · komponen UI gaya shadcn (Radix)
 - Supabase — PostgreSQL + RLS, Auth (Email / Google / GitHub), Storage
 - AI Gateway dengan provider abstraction + key rotation
-  (Nara/Mistral → China/Qwen → Gemini sebagai fallback berantai)
+  (Mistral → Qwen → Gemini sebagai fallback berantai)
 - PDF: HTML/CSS → Chromium (Puppeteer) — bukan screenshot
 - Midtrans Snap (IDR) dengan verifikasi webhook server-side
 
-## Menjalankan
+## Link
+- https://portotional.vercel.app/
 
-```bash
-npm install
-npm run dev        # http://localhost:3000
-```
-
-Env yang dibutuhkan ada di `.env.local` (Supabase URL/keys, kunci AI router,
-Midtrans). `NEXT_PUBLIC_ROOT_DOMAIN=portotional.com` dipakai middleware untuk
-routing subdomain `username.portotional.com → /sites/[username]`. Untuk
-pengujian subdomain lokal gunakan `*.lvh.me`.
-
-## Struktur
-
-```
-src/
-├── app/            # routes (marketing, auth, app/, u/, sites/, api/)
-├── components/     # ui primitives + layout
-├── features/       # identity, cv, ai, website, profile, onboarding, payments
-├── lib/            # supabase clients, ai gateway, pdf engine, payments, ats
-├── services/       # data access layer
-├── actions/        # server actions (identity, cv, website, uploads)
-└── types/
-supabase/migrations/ # skema lengkap + RLS + seed (profesi & template)
-```
 
 ## Prinsip produk
 
@@ -51,12 +29,3 @@ supabase/migrations/ # skema lengkap + RLS + seed (profesi & template)
 4. **Privacy by default** — profil privat; publikasi eksplisit per-bagian.
 5. **RLS di semua tabel user-owned** — otorisasi tidak pernah hanya di client.
 
-## Skrip
-
-| Perintah           | Fungsi                      |
-| ------------------ | --------------------------- |
-| `npm run dev`      | Development server          |
-| `npm run build`    | Production build            |
-| `npm run start`    | Menjalankan hasil build     |
-| `npm run lint`     | ESLint                      |
-| `npm run typecheck`| TypeScript strict check     |
