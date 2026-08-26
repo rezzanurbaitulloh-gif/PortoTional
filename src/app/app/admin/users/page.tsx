@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -99,8 +100,10 @@ export default async function AdminUsersPage({
             <tbody>
               {users.map((u) => (
                 <tr key={u.id} className="border-b border-line/60 align-middle">
-                  <td className="max-w-[240px] truncate py-2.5 pr-3 text-ivory">
-                    {u.email ?? u.id}
+                  <td className="max-w-[240px] truncate py-2.5 pr-3">
+                    <Link href={`/app/admin/users/${u.id}`} className="text-gold hover:underline">
+                      {u.email ?? u.id}
+                    </Link>
                   </td>
                   <td className="whitespace-nowrap py-2.5 pr-3 text-muted">
                     {new Date(u.created_at).toLocaleDateString()}

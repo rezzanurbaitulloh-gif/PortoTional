@@ -216,3 +216,54 @@ export async function revokeProAction(input: unknown): Promise<{
     return { ok: false, error: "Failed to revoke Pro." };
   }
 }
+
+const VERIFY_SCHEMA = z.object({
+  userId: uuid,
+  status: z.enum(["unverified", "verified"]),
+  reason: z.string().min(3).max(300),
+});
+
+export async function setVerificationAction(input: unknown): Promise<{
+  ok: boolean;
+  error?: string;
+}> {
+  try {
+    const adminProfile = await requireAdmin();
+    const { roleHasPermission } = await import("@/lib/permissions");
+    if (!roleHasPermission(adminProfile.role ?? "USER", "verification.review")) {
+      return { ok: false, error: "Not permitted." };
+    }
+    const parsed = VERIFY_SCHEMA.safeParse(input);
+    if (!parsed.success) return { ok: false, error: "Invalid verification input." };
+
+    const supabase = await getSupabaseServerClient();
+    const { data: before } = await supabase
+      .from("profiles")
+      .select("verification_status")
+      .eq("user_id", parsed.data.userId)
+      .maybeSingle();
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({ verification_status: parsed.data.status })
+      .eq("user_id", parsed.data.userId);
+    if (error) return { ok: false, error: error.message };
+
+    await logAudit({
+      actorUserId: adminProfile.user_id,
+      action:
+        parsed.data.status === "verified"
+          ? "admin.verify_user"
+          : "admin.unverify_user",
+      entityType: "user",
+      entityId: parsed.data.userId,
+      reason: parsed.data.reason,
+      beforeState: { verification_status: before?.verification_status ?? null },
+      afterState: { verification_status: parsed.data.status },
+    });
+    revalidatePath(`/app/admin/users/${parsed.data.userId}`);
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "Failed to update verification." };
+  }
+}
