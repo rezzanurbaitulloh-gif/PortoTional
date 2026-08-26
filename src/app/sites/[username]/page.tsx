@@ -21,6 +21,7 @@ interface SiteData {
   website: WebsiteRow | null;
   sections: { section_type: string; is_visible: boolean; sort_order: number }[];
   template: TemplateRow | null;
+  showcases: Record<string, unknown>[];
 }
 
 async function loadSite(username: string): Promise<SiteData | null> {
@@ -38,6 +39,27 @@ async function loadSite(username: string): Promise<SiteData | null> {
     .maybeSingle();
   const website = (siteRes.data as WebsiteRow | null) ?? null;
 
+  // §8 — the website consumes the same canonical showcase data. No re-entry.
+  let showcases: Record<string, unknown>[] = [];
+  {
+    const { data: profRow } = await db
+      .from("profiles")
+      .select("id")
+      .eq("username", username)
+      .maybeSingle();
+    const scRes = await db
+      .from("showcases")
+      .select(
+        "id,type,title,short_description,cover_url,gallery,role,organization,skills,tags,start_date,end_date,github_url,demo_url,results_impact,case_study,featured,show_on_website",
+      )
+      .eq("profile_id", profRow?.id ?? "")
+      .eq("visibility", "public")
+      .order("sort_order");
+    showcases = ((scRes.data ?? []) as Record<string, unknown>[]).filter(
+      (x) => x.show_on_website !== false,
+    );
+  }
+
   let template: TemplateRow | null = null;
   if (website?.template_id) {
     const tpl = await db
@@ -48,7 +70,7 @@ async function loadSite(username: string): Promise<SiteData | null> {
     template = (tpl.data as TemplateRow | null) ?? null;
   }
 
-  return { profile, website, sections: [], template };
+  return { profile, website, sections: [], template, showcases };
 }
 
 export async function generateMetadata({
@@ -165,8 +187,56 @@ export default async function PersonalWebsitePage({
         </section>
       ) : null}
 
-      {/* SELECTED WORK */}
-      {hasWorks ? (
+      {/* FEATURED PROJECTS + SHOWCASE (§8 canonical data) */}
+      {site.showcases.length > 0 ? (
+        <>
+          {site.showcases.filter((x) => x.featured).length > 0 ? (
+            <section className="mx-auto max-w-4xl px-6 pb-16">
+              <SectionHeading dark={darkTheme}>Featured Projects</SectionHeading>
+              <div className="grid gap-5 sm:grid-cols-2">
+                {site.showcases.filter((x) => x.featured).slice(0, 4).map((sc) => (
+                  <WebsiteShowcaseCard key={String(sc.id)} sc={sc} accent={accent} dark={darkTheme} expanded />
+                ))}
+              </div>
+            </section>
+          ) : null}
+          {site.showcases.filter((x) => !x.featured).length > 0 ? (
+            <section className="mx-auto max-w-4xl px-6 pb-16">
+              <SectionHeading dark={darkTheme}>Showcase</SectionHeading>
+              <div className="grid gap-5 sm:grid-cols-2">
+                {site.showcases.filter((x) => !x.featured).slice(0, 8).map((sc) => (
+                  <WebsiteShowcaseCard key={String(sc.id)} sc={sc} accent={accent} dark={darkTheme} />
+                ))}
+              </div>
+            </section>
+          ) : null}
+          {/* GALLERY — aggregated showcase media */}
+          {(() => {
+            const shots = site.showcases.flatMap((sc) =>
+              Array.isArray(sc.gallery) ? (sc.gallery as { url: string }[]) : [],
+            );
+            if (!shots.length) return null;
+            return (
+              <section className="mx-auto max-w-4xl px-6 pb-16">
+                <SectionHeading dark={darkTheme}>Gallery</SectionHeading>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {shots.slice(0, 8).map((g, i) => (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      key={i}
+                      src={g.url}
+                      alt=""
+                      loading="lazy"
+                      className="h-28 w-full rounded-lg border object-cover"
+                      style={{ borderColor: darkTheme ? "#2c303a" : "#e2e5ea" }}
+                    />
+                  ))}
+                </div>
+              </section>
+            );
+          })()}
+        </>
+      ) : hasWorks ? (
         <section className="mx-auto max-w-4xl px-6 pb-16">
           <SectionHeading dark={darkTheme}>Selected Work</SectionHeading>
           <div className="grid gap-5 sm:grid-cols-2">
@@ -298,5 +368,109 @@ function SectionHeading({
     >
       {children}
     </h2>
+  );
+}
+
+function WebsiteShowcaseCard({
+  sc,
+  accent,
+  dark,
+  expanded = false,
+}: {
+  sc: Record<string, unknown>;
+  accent: string;
+  dark: boolean;
+  expanded?: boolean;
+}) {
+  const cs = sc.case_study as Record<string, string> | null;
+  const hasCaseStudy = Boolean(cs && Object.values(cs).some((v) => v?.trim()));
+  return (
+    <article
+      className="card-lift overflow-hidden rounded-xl border"
+      style={{ borderColor: dark ? "#2c303a" : "#e2e5ea" }}
+    >
+      {sc.cover_url ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={String(sc.cover_url)}
+          alt={String(sc.title ?? "")}
+          loading="lazy"
+          className="h-44 w-full border-b object-cover"
+          style={{ borderColor: dark ? "#2c303a" : "#e2e5ea" }}
+        />
+      ) : null}
+      <div className="space-y-2 p-5">
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="font-medium">{String(sc.title ?? "")}</h3>
+          <span
+            className="shrink-0 rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide opacity-70"
+            style={{ borderColor: dark ? "#2c303a" : "#e2e5ea" }}
+          >
+            {String(sc.type ?? "project")}
+          </span>
+        </div>
+        {sc.role || sc.organization ? (
+          <p className="text-xs italic opacity-60">
+            {[sc.role, sc.organization].filter(Boolean).join(" · ")}
+          </p>
+        ) : null}
+        <p className="line-clamp-3 text-sm opacity-75">
+          {String(sc.short_description ?? "")}
+        </p>
+        {Array.isArray(sc.skills) && (sc.skills as string[]).length ? (
+          <p className="text-[11px] uppercase tracking-wide opacity-50">
+            {(sc.skills as string[]).slice(0, 4).join(" · ")}
+          </p>
+        ) : null}
+        <div className="flex flex-wrap gap-3 pt-1 text-xs">
+          {sc.github_url ? (
+            <a href={String(sc.github_url)} target="_blank" rel="noopener noreferrer nofollow" style={{ color: accent }}>
+              Code ↗
+            </a>
+          ) : null}
+          {sc.demo_url ? (
+            <a href={String(sc.demo_url)} target="_blank" rel="noopener noreferrer nofollow" style={{ color: accent }}>
+              Live ↗
+            </a>
+          ) : null}
+        </div>
+        {hasCaseStudy ? (
+          <details className="mt-2 rounded-lg border p-3" style={{ borderColor: dark ? "#2c303a" : "#e8eaee" }}>
+            <summary className="cursor-pointer text-xs font-medium" style={{ color: accent }}>
+              Read case study
+            </summary>
+            <dl className="mt-3 space-y-2.5 text-xs leading-relaxed opacity-85">
+              {(
+                [
+                  ["Problem", "problem"],
+                  ["Goals", "goals"],
+                  ["Process", "process"],
+                  ["Solution", "solution"],
+                  ["Key features", "features"],
+                  ["Lessons learned", "lessons"],
+                ] as const
+              ).map(([label, key]) =>
+                cs?.[key]?.trim() ? (
+                  <div key={key}>
+                    <dt className="font-semibold">{label}</dt>
+                    <dd className="whitespace-pre-wrap">{cs[key]}</dd>
+                  </div>
+                ) : null,
+              )}
+              {sc.results_impact ? (
+                <div>
+                  <dt className="font-semibold">Results</dt>
+                  <dd>{String(sc.results_impact)}</dd>
+                </div>
+              ) : null}
+            </dl>
+          </details>
+        ) : expanded && sc.results_impact ? (
+          <p className="pt-1 text-xs font-medium" style={{ color: accent }}>
+            📈 {String(sc.results_impact)}
+          </p>
+        ) : null}
+      </div>
+    </article>
   );
 }
