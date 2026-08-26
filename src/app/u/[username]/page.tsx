@@ -514,13 +514,45 @@ function ShowcaseCard({ sc }: { sc: Record<string, unknown> }) {
               Live demo ↗
             </a>
           ) : null}
-          {sc.resultsImpact ? (
-            <span className="truncate text-muted" title={String(sc.resultsImpact)}>
-              📈 {String(sc.resultsImpact)}
-            </span>
-          ) : null}
         </div>
+        {sc.resultsImpact ? (
+          <p className="pt-1 text-xs font-medium text-gold">📈 {String(sc.resultsImpact)}</p>
+        ) : null}
+        <CaseStudyReader cs={sc.caseStudy} />
       </div>
     </article>
+  );
+}
+
+function CaseStudyReader({ cs }: { cs: unknown }) {
+  const study = (cs ?? null) as Record<string, string> | null;
+  const hasContent =
+    Boolean(study) && Object.values(study ?? {}).some((v) => v?.trim());
+  if (!hasContent) return null;
+  return (
+    <details className="mt-2 rounded-md border border-line bg-surface p-3 text-xs">
+      <summary className="cursor-pointer font-medium text-gold">
+        Read case study
+      </summary>
+      <dl className="mt-2.5 space-y-2 leading-relaxed text-ivory-dim">
+        {(
+          [
+            ["Problem", "problem"],
+            ["Goals", "goals"],
+            ["Process", "process"],
+            ["Solution", "solution"],
+            ["Key features", "features"],
+            ["Lessons learned", "lessons"],
+          ] as const
+        ).map(([label, key]) =>
+          study?.[key]?.trim() ? (
+            <div key={key}>
+              <dt className="font-semibold text-ivory">{label}</dt>
+              <dd className="whitespace-pre-wrap">{study[key]}</dd>
+            </div>
+          ) : null,
+        )}
+      </dl>
+    </details>
   );
 }

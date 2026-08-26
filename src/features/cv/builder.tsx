@@ -605,8 +605,9 @@ const [hydrated, setHydrated] = useState(false);
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="A4">A4</SelectItem>
-                      <SelectItem value="F4">F4</SelectItem>
+                      <SelectItem value="A4">A4 (210×297mm)</SelectItem>
+                      <SelectItem value="LETTER">Letter (216×279mm)</SelectItem>
+                      <SelectItem value="F4">F4 (210×330mm)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -831,7 +832,7 @@ function PreviewFrame({ doc }: { doc: ReturnType<typeof buildDoc> }) {
   return (
     <>
       <style>{`
-        .pv-page { width: ${doc.pageSize === "F4" ? 210 : 210}mm; min-height: ${doc.pageSize === "F4" ? 330 : 297}mm; background:#fff; color:#1a1c20; padding:14mm 15mm; box-sizing:border-box; font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; position:relative;}
+        .pv-page { width: ${doc.pageSize === "LETTER" ? 216 : 210}mm; min-height: ${doc.pageSize === "F4" ? 330 : doc.pageSize === "LETTER" ? 279 : 297}mm; background:#fff; color:#1a1c20; padding:14mm ${doc.pageSize === "LETTER" ? 16 : 15}mm; box-sizing:border-box; font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; position:relative;}
         .pv-page::after { content:""; display:none; }
       `}</style>
       <div className="pv-page">

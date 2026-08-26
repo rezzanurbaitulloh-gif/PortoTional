@@ -1,24 +1,60 @@
-import puppeteer from "puppeteer";
-import type { Browser } from "puppeteer";
-
-const globalForPdf = globalThis as unknown as {
-  __portoPdfBrowser?: Promise<Browser>;
+type BrowserLike = {
+  newPage: () => Promise<{
+    setContent: (html: string, o?: unknown) => Promise<void>;
+    pdf: (o?: unknown) => Promise<Uint8Array | Buffer>;
+    close: () => Promise<void>;
+  }>;
+  close: () => Promise<void>;
 };
 
-export function getBrowser(): Promise<Browser> {
+const globalForPdf = globalThis as unknown as {
+  __portoPdfBrowser?: Promise<BrowserLike>;
+};
+
+/**
+ * PDF engine.
+ * - Serverless (Vercel): puppeteer-core + @sparticuz/chromium (packaged Chrome).
+ * - Local/other: full puppeteer (system Chrome via its own download).
+ */
+export function getBrowser(): Promise<BrowserLike> {
   if (!globalForPdf.__portoPdfBrowser) {
-    globalForPdf.__portoPdfBrowser = puppeteer.launch({
-      headless: true,
+    globalForPdf.__portoPdfBrowser = launch();
+  }
+  return globalForPdf.__portoPdfBrowser;
+}
+
+async function launch(): Promise<BrowserLike> {
+  if (process.env.VERCEL) {
+    const [{ default: chromium }, puppeteerCore] = await Promise.all([
+      import("@sparticuz/chromium"),
+      import("puppeteer-core"),
+    ]);
+    const browser = (await puppeteerCore.launch({
       args: [
+        ...chromium.args,
         "--no-sandbox",
         "--disable-setuid-sandbox",
         "--disable-dev-shm-usage",
         "--disable-gpu",
         "--font-render-hinting=none",
       ],
-    });
+      executablePath: await chromium.executablePath(),
+      headless: true,
+    })) as unknown as BrowserLike;
+    return browser;
   }
-  return globalForPdf.__portoPdfBrowser;
+
+  const puppeteer = (await import("puppeteer")).default;
+  return (await puppeteer.launch({
+    headless: true,
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-gpu",
+      "--font-render-hinting=none",
+    ],
+  })) as unknown as BrowserLike;
 }
 
 export async function htmlToPdf(
@@ -41,10 +77,10 @@ export async function htmlToPdf(
             ? "279mm"
             : "297mm",
       printBackground: true,
-      margin: { top: "0", bottom: "0", left: "0", right: "0" },
+      preferCSSPageSize: false,
     });
     return Buffer.from(bytes);
   } finally {
-    await page.close().catch(() => {});
+    await page.close();
   }
 }

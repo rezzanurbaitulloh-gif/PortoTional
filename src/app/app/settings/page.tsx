@@ -7,6 +7,7 @@ import Link from "next/link";
 import { UpgradeButton } from "@/features/payments/upgrade-button";
 import { DataManagement } from "@/features/settings/data-management";
 import { NotificationPrefs } from "@/features/settings/notification-prefs";
+import { ChangePassword } from "@/features/settings/change-password";
 import type { PaymentRow } from "@/types/database";
 
 export const metadata = { title: "Settings" };
@@ -50,6 +51,7 @@ export default async function SettingsPage() {
             <span className="text-muted">Username</span>
             <span className="font-mono text-gold">{profile.username}</span>
           </p>
+          <ChangePassword />
           <p className="flex justify-between">
             <span className="text-muted">Sign-in methods</span>
             <span className="capitalize text-ivory">
