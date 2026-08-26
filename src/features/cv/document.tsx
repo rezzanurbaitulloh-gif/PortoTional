@@ -60,7 +60,7 @@ export interface ResumeDocSection {
 }
 
 export interface ResumeDoc {
-  pageSize: "A4" | "F4";
+  pageSize: "A4" | "F4" | "LETTER";
   accentColor: string;
   showPhoto: boolean;
   fontScale: number;

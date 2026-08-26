@@ -185,7 +185,7 @@ export interface ResumeRow {
   target_company: string;
   target_job_description: string;
   language: string;
-  page_size: "A4" | "F4";
+  page_size: "A4" | "F4" | "LETTER";
   template_id: string | null;
   status: string;
   settings: {

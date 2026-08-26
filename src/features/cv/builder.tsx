@@ -112,7 +112,8 @@ export function CvBuilder({
 }) {
   const store = useBuilderStore();
   const isPro = plan === "pro";
-  const [hydrated, setHydrated] = useState(false);
+  const [zoom, setZoom] = useState(0.72);
+const [hydrated, setHydrated] = useState(false);
   const [versionsOpen, setVersionsOpen] = useState(false);
   const [versions, setVersions] = useState<ResumeVersionRow[]>([]);
   const [exporting, setExporting] = useState(false);
@@ -597,7 +598,7 @@ export function CvBuilder({
                   <Select
                     value={store.fields.page_size}
                     onValueChange={(v) =>
-                      store.setField("page_size", v as "A4" | "F4")
+                      store.setField("page_size", v as "A4" | "F4" | "LETTER")
                     }
                   >
                     <SelectTrigger className="mt-1.5">
@@ -731,16 +732,55 @@ export function CvBuilder({
         <div className="min-w-0">
           <div className="sticky top-20">
             <div className="overflow-x-auto rounded-xl border border-line bg-surface p-4">
-              <div className="mx-auto w-fit origin-top scale-[0.62] max-xl:sm:scale-75 xl:scale-[0.72] 2xl:scale-90 shadow-2xl">
+              <div
+                className="mx-auto w-fit origin-top shadow-2xl"
+                style={{ transform: `scale(${zoom})` }}
+              >
                 <div className="pointer-events-none">
                   <PreviewFrame doc={doc} />
                 </div>
               </div>
             </div>
-            <p className="mt-2 flex items-center justify-center gap-1.5 text-center text-xs text-muted">
-              <Eye className="h-3 w-3" /> Live preview · {doc.pageSize} ·
-              updates as you edit
-            </p>
+            <div className="mt-2 flex items-center justify-center gap-2">
+              {/* §11 viewer controls — zoom never changes document layout */}
+              <div
+                role="group"
+                aria-label="Preview zoom"
+                className="inline-flex items-center gap-0.5 rounded-lg border border-line bg-surface p-0.5"
+              >
+                <button
+                  type="button"
+                  onClick={() => setZoom((z) => Math.max(0.4, +(z - 0.1).toFixed(2)))}
+                  aria-label="Zoom out"
+                  className="rounded-md px-2 py-1 text-xs text-muted hover:text-ivory"
+                >
+                  −
+                </button>
+                <span className="min-w-[38px] text-center text-[11px] text-muted">
+                  {Math.round(zoom * 100)}%
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setZoom((z) => Math.min(1.25, +(z + 0.1).toFixed(2)))}
+                  aria-label="Zoom in"
+                  className="rounded-md px-2 py-1 text-xs text-muted hover:text-ivory"
+                >
+                  +
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setZoom(0.72)}
+                  aria-label="Reset zoom"
+                  className="rounded-md px-2 py-1 text-[11px] text-muted hover:text-ivory"
+                >
+                  Reset
+                </button>
+              </div>
+              <p className="flex items-center gap-1.5 text-center text-xs text-muted">
+                <Eye className="h-3 w-3" /> Live preview · {doc.pageSize} ·
+                updates as you edit
+              </p>
+            </div>
           </div>
         </div>
       </div>

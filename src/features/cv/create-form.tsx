@@ -108,13 +108,15 @@ export function CreateCvForm({
                     type="button"
                     disabled={locked}
                     onClick={() => setTemplateId(t.id)}
+                    aria-pressed={templateId === t.id}
                     className={`rounded-lg border p-3 text-left transition-colors ${
                       templateId === t.id
                         ? "border-gold bg-gold/5"
                         : "border-line hover:border-line-strong"
                     } ${locked ? "cursor-not-allowed opacity-50" : ""}`}
                   >
-                    <span className="block text-sm font-medium text-ivory">
+                    <TemplatePreview config={t.configuration as Record<string, unknown>} />
+                    <span className="mt-2 block text-sm font-medium text-ivory">
                       {t.name}
                       {t.is_premium ? (
                         <Badge className="ml-1.5 text-[10px]">Pro</Badge>
@@ -169,5 +171,48 @@ export function CreateCvForm({
         </form>
       </CardContent>
     </Card>
+  );
+}
+
+function TemplatePreview({ config }: { config: Record<string, unknown> }) {
+  const accent = (config.accent as string) ?? "#0B0C10";
+  const twoCol = config.layout === "two-column";
+  const serif = Boolean(config.serif);
+  const mono = Boolean(config.mono);
+  const largeHeader = Boolean(config.largeHeader);
+  return (
+    <div
+      aria-hidden
+      className="h-24 w-full overflow-hidden rounded-md border border-line bg-white p-1.5"
+    >
+      <div className="flex items-center gap-1">
+        <div
+          className={`${largeHeader ? "h-4" : "h-3"} w-16 rounded-sm`}
+          style={{ background: accent }}
+        />
+        {!twoCol ? (
+          <div className="ml-auto h-2.5 w-6 rounded-full" style={{ background: "#d8dbe0" }} />
+        ) : null}
+      </div>
+      <div className={`mt-1.5 flex gap-1.5${serif ? " font-serif" : mono ? " font-mono" : ""}`}>
+        {twoCol ? (
+          <div className="flex w-1/3 flex-col gap-1 border-r border-gray-200 pr-1">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="h-1.5 rounded-sm bg-gray-200" />
+            ))}
+            <div className="mt-1 h-1.5 w-8 rounded-full" style={{ background: accent, opacity: 0.7 }} />
+          </div>
+        ) : null}
+        <div className="flex flex-1 flex-col gap-1">
+          <div className="h-1.5 w-3/4 rounded-sm" style={{ background: accent, opacity: 0.35 }} />
+          {[...Array(largeHeader ? 3 : 4)].map((_, i) => (
+            <div key={i} className="flex items-center gap-1">
+              <div className="h-1.5 w-1/3 rounded-sm bg-gray-300" />
+              <div className="h-1.5 flex-1 rounded-sm bg-gray-100" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }

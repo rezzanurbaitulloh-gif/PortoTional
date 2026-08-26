@@ -152,7 +152,7 @@ export function buildResumeHtml(doc: ResumeDoc): string {
 <meta charset="utf-8" />
 <style>${resumeCss()}</style>
 </head>
-<body class="page ${doc.pageSize === "F4" ? "page-f4" : "page-a4"}">
+<body class="page ${doc.pageSize === "F4" ? "page-f4" : doc.pageSize === "LETTER" ? "page-letter" : "page-a4"}">
 ${body}
 </body>
 </html>`;

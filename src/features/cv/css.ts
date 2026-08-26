@@ -5,6 +5,7 @@ html, body { background: #fff; color: #1a1c20; font-family: "Helvetica Neue", He
 
 .page { width: 210mm; min-height: 297mm; margin: 0 auto; padding: 14mm 15mm; }
 .page-f4 { width: 210mm; min-height: 330mm; }
+.page-letter { width: 216mm; min-height: 279mm; }
 
 .rt-doc { line-height: 1.45; }
 .rt-header { display: flex; align-items: center; gap: 14pt; margin-bottom: 12pt; }
@@ -36,4 +37,5 @@ html, body { background: #fff; color: #1a1c20; font-family: "Helvetica Neue", He
 export const RESUME_PAGE_SIZES = {
   A4: { width: "210mm", height: "297mm" },
   F4: { width: "210mm", height: "330mm" },
+  LETTER: { width: "216mm", height: "279mm" },
 } as const;
