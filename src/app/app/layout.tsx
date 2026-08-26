@@ -7,6 +7,7 @@ import {
   Globe,
   LayoutDashboard,
   MonitorSmartphone,
+  Rocket,
   Search,
   Settings,
   ShieldCheck,
@@ -30,12 +31,14 @@ const icons = {
   Settings,
   Search,
   ShieldCheck,
+  Rocket,
 } as const;
 
 const NAV = [
   { href: "/app/dashboard", label: "Dashboard", icon: "LayoutDashboard" },
   { href: "/discover", label: "Discover", icon: "Search" },
   { href: "/app/identity", label: "Identity", icon: "Fingerprint" },
+  { href: "/app/showcase", label: "Showcase", icon: "Rocket" },
   { href: "/app/cv", label: "My CVs", icon: "FileText" },
   { href: "/app/ai", label: "AI Studio", icon: "Sparkles" },
   { href: "/app/showcase/profile", label: "Public Profile", icon: "Globe" },

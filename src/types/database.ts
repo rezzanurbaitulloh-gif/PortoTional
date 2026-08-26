@@ -373,3 +373,60 @@ export interface FeatureFlagRow {
   description: string;
   updated_at: string;
 }
+
+export type ShowcaseType =
+  | "project"
+  | "activity"
+  | "achievement"
+  | "certification"
+  | "experience"
+  | "event"
+  | "design"
+  | "publication"
+  | "custom";
+
+export interface ShowcaseGalleryItem {
+  url: string;
+  caption?: string;
+}
+
+export interface CaseStudy {
+  problem?: string;
+  goals?: string;
+  process?: string;
+  solution?: string;
+  features?: string;
+  lessons?: string;
+}
+
+export interface ShowcaseRow {
+  id: string;
+  profile_id: string;
+  type: ShowcaseType;
+  title: string;
+  short_description: string;
+  full_description: string;
+  cover_url: string | null;
+  gallery: ShowcaseGalleryItem[];
+  video_url: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  role: string;
+  organization: string;
+  collaborators: string[];
+  skills: string[];
+  tags: string[];
+  category: string;
+  github_url: string | null;
+  demo_url: string | null;
+  links: { label: string; url: string }[];
+  results_impact: string;
+  case_study: CaseStudy | null;
+  visibility: "public" | "unlisted" | "private";
+  show_on_profile: boolean;
+  show_on_website: boolean;
+  featured: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}

@@ -63,6 +63,16 @@ export default async function PublicProfilePage({
   const profile = await getProfile(username);
 
   if (!profile) notFound();
+
+  // §6 — evidence-first: canonical showcases power Featured Work & gallery.
+  const { data: showcaseRows } = await supabaseAdmin.rpc(
+    "list_public_showcases",
+    { target_username: username },
+  );
+  const showcases =
+    (showcaseRows as Array<Record<string, unknown>> | null) ?? [];
+  const featuredShowcases = showcases.filter((x) => x.featured);
+  const shownShowcases = showcases.filter((x) => !x.featured);
   if (!profile.public) {
     return (
       <PrivateProfileState username={username} />
@@ -123,20 +133,64 @@ export default async function PublicProfilePage({
           </div>
         </section>
 
-        {profile.skills && profile.skills.length > 0 ? (
-          <Section title="Skills">
-            <ul className="flex flex-wrap gap-2">
-              {profile.skills.map((s, i) => (
-                <li key={i}>
-                  <span
-                    className="rounded-full border border-line px-3 py-1 text-xs text-ivory-dim"
-                    title={PROFICIENCY_LABELS[s.proficiency_label] ?? ""}
-                  >
-                    {s.name}
-                  </span>
+        {featuredShowcases.length > 0 ? (
+          <Section title="Featured Work">
+            <ul className="grid gap-4 sm:grid-cols-2">
+              {featuredShowcases.map((sc) => (
+                <li key={String(sc.id)}>
+                  <ShowcaseCard sc={sc} />
                 </li>
               ))}
             </ul>
+          </Section>
+        ) : null}
+
+        {shownShowcases.length > 0 ? (
+          <Section title="Showcase">
+            <ul className="grid gap-4 sm:grid-cols-2" id="showcase-grid">
+              {shownShowcases.map((sc) => (
+                <li key={String(sc.id)} id={`showcase-${String(sc.id)}`}>
+                  <ShowcaseCard sc={sc} />
+                </li>
+              ))}
+            </ul>
+          </Section>
+        ) : null}
+
+        {profile.skills && profile.skills.length > 0 ? (
+          <Section title="Skills">
+            <ul className="flex flex-wrap gap-2">
+              {profile.skills.map((s, i) => {
+                const evidence = showcases.filter((sc) =>
+                  Array.isArray(sc.skills)
+                    ? (sc.skills as string[]).some(
+                        (k) => k.toLowerCase() === s.name.toLowerCase(),
+                      )
+                    : false,
+                ).length;
+                return (
+                  <li key={i}>
+                    <span
+                      className="rounded-full border border-line px-3 py-1 text-xs text-ivory-dim"
+                      title={[
+                        PROFICIENCY_LABELS[s.proficiency_label] ?? "",
+                        evidence > 0 ? `used in ${evidence} showcase${evidence > 1 ? "s" : ""}` : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    >
+                      {s.name}
+                      {evidence > 0 ? (
+                        <span className="ml-1 text-gold">· {evidence}</span>
+                      ) : null}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+            <p className="mt-2 text-[11px] text-muted">
+              Numbers show how many showcased projects use each skill.
+            </p>
           </Section>
         ) : null}
 
@@ -355,5 +409,77 @@ function PrivateProfileState({ username }: { username: string }) {
         </Link>
       </div>
     </div>
+  );
+}
+
+function ShowcaseCard({ sc }: { sc: Record<string, unknown> }) {
+  const cover = sc.coverUrl as string | null;
+  const gallery = Array.isArray(sc.gallery)
+    ? (sc.gallery as { url: string; caption?: string }[])
+    : [];
+  return (
+    <article className="card-lift h-full overflow-hidden rounded-xl border border-line bg-surface">
+      {cover ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={cover}
+          alt={String(sc.title ?? "")}
+          className="h-40 w-full border-b border-line object-cover"
+        />
+      ) : null}
+      <div className="space-y-2 p-4">
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="font-medium text-ivory">{String(sc.title ?? "")}</h3>
+          <span className="shrink-0 rounded-full border border-line px-2 py-0.5 text-[10px] uppercase tracking-wide text-muted">
+            {String(sc.type ?? "project")}
+          </span>
+        </div>
+        {sc.role || sc.organization ? (
+          <p className="text-xs italic text-muted">
+            {[sc.role, sc.organization].filter(Boolean).join(" · ")}
+          </p>
+        ) : null}
+        {sc.shortDescription ? (
+          <p className="line-clamp-3 text-sm leading-relaxed text-ivory-dim">
+            {String(sc.shortDescription)}
+          </p>
+        ) : null}
+        {Array.isArray(sc.skills) && (sc.skills as string[]).length ? (
+          <p className="text-[11px] uppercase tracking-wide text-muted">
+            {(sc.skills as string[]).slice(0, 4).join(" · ")}
+          </p>
+        ) : null}
+        {gallery.length > 1 ? (
+          <div className="flex gap-1.5 pt-1">
+            {gallery.slice(0, 4).map((g, i) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={i}
+                src={g.url}
+                alt=""
+                className="h-10 w-14 rounded border border-line object-cover"
+              />
+            ))}
+          </div>
+        ) : null}
+        <div className="flex gap-3 pt-1 text-xs">
+          {sc.githubUrl ? (
+            <a href={String(sc.githubUrl)} target="_blank" rel="noopener noreferrer" className="text-gold hover:underline">
+              Code ↗
+            </a>
+          ) : null}
+          {sc.demoUrl ? (
+            <a href={String(sc.demoUrl)} target="_blank" rel="noopener noreferrer" className="text-gold hover:underline">
+              Live demo ↗
+            </a>
+          ) : null}
+          {sc.resultsImpact ? (
+            <span className="truncate text-muted" title={String(sc.resultsImpact)}>
+              📈 {String(sc.resultsImpact)}
+            </span>
+          ) : null}
+        </div>
+      </div>
+    </article>
   );
 }
