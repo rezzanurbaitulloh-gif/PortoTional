@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
+  Bookmark,
+  Send,
   BarChart3,
   Fingerprint,
   FileText,
@@ -34,6 +36,8 @@ const icons = {
   ShieldCheck,
   Rocket,
   Image: ImageIcon,
+  Bookmark,
+  Send,
 } as const;
 
 const NAV = [
@@ -42,6 +46,8 @@ const NAV = [
   { href: "/app/identity", label: "Identity", icon: "Fingerprint" },
   { href: "/app/showcase", label: "Showcase", icon: "Rocket" },
   { href: "/app/assets", label: "Assets", icon: "Image" },
+  { href: "/app/saved", label: "Saved", icon: "Bookmark" },
+  { href: "/app/contacts", label: "Contacts", icon: "Send" },
   { href: "/app/cv", label: "My CVs", icon: "FileText" },
   { href: "/app/ai", label: "AI Studio", icon: "Sparkles" },
   { href: "/app/showcase/profile", label: "Public Profile", icon: "Globe" },

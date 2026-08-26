@@ -8,18 +8,6 @@ import { logAudit, notifyUser } from "@/services/audit";
 import { showcaseSchema } from "@/lib/validation/showcase";
 import type { ShowcaseRow } from "@/types/database";
 
-const SHOWCASE_TYPES = [
-  "project",
-  "activity",
-  "achievement",
-  "certification",
-  "experience",
-  "event",
-  "design",
-  "publication",
-  "custom",
-] as const;
-
 export async function listShowcases(): Promise<ShowcaseRow[]> {
   const profile = await requireCurrentProfile();
   const supabase = await getSupabaseServerClient();

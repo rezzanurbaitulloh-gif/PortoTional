@@ -13,7 +13,39 @@ import { Badge } from "@/components/ui/badge";
 import { PublicTracker, TrackedExternalLink } from "@/features/website/public-tracker";
 import { DownloadCtaButton } from "@/features/profile/download-cta";
 import { ReportProfileDialog } from "@/features/profile/report-dialog";
+import { ProfileActions } from "@/features/profile/profile-actions";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 import type { PublicProfileData } from "@/types/database";
+
+async function getViewer(
+  username: string,
+): Promise<{ userId: string | null; saved: boolean; isOwner: boolean }> {
+  try {
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      { cookies: { getAll: () => cookieStore.getAll() } },
+    );
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { userId: null, saved: false, isOwner: false };
+
+    const [{ data: me }, savedRes] = await Promise.all([
+      supabase.from("profiles").select("username").eq("user_id", user.id).maybeSingle(),
+      supabase.rpc("is_saved_professional", { target_username: username }),
+    ]);
+    return {
+      userId: user.id,
+      saved: Boolean(savedRes.data),
+      isOwner: me?.username?.toLowerCase() === username.toLowerCase(),
+    };
+  } catch {
+    return { userId: null, saved: false, isOwner: false };
+  }
+}
 
 export const revalidate = 60;
 
@@ -60,7 +92,10 @@ export default async function PublicProfilePage({
   params: Promise<{ username: string }>;
 }) {
   const { username } = await params;
-  const profile = await getProfile(username);
+  const [profile, viewer] = await Promise.all([
+    getProfile(username),
+    getViewer(username),
+  ]);
 
   if (!profile) notFound();
 
@@ -132,6 +167,12 @@ export default async function PublicProfilePage({
             </p>
           </div>
         </section>
+
+        {viewer.userId && !viewer.isOwner ? (
+          <div className="mt-6 flex justify-center sm:justify-start">
+            <ProfileActions username={username} initiallySaved={viewer.saved} />
+          </div>
+        ) : null}
 
         {featuredShowcases.length > 0 ? (
           <Section title="Featured Work">
