@@ -25,6 +25,14 @@ function resolveSubdomain(host: string): string | null {
 const PROTECTED_PREFIXES = ["/app", "/onboarding"];
 const AUTH_PAGES = ["/login", "/signup"];
 
+/** §79 — set MAINTENANCE_MODE=1 (env) to show the maintenance page. Admins bypass. */
+const MAINTENANCE_EXEMPT = [
+  "/maintenance",
+  "/login",
+  "/auth",
+  "/app/admin",
+];
+
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -54,6 +62,30 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
+
+  if (
+    process.env.MAINTENANCE_MODE === "1" &&
+    !MAINTENANCE_EXEMPT.some((p) => pathname.startsWith(p)) &&
+    !pathname.match(/\.(svg|png|jpg|jpeg|webp|ico)$/)
+  ) {
+    const isAdmin = user
+      ? await (async () => {
+          const { data: prof } = await supabase
+            .from("profiles")
+            .select("is_admin")
+            .eq("user_id", user.id)
+            .maybeSingle();
+          return Boolean(prof?.is_admin);
+        })()
+      : false;
+    if (!isAdmin) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/maintenance";
+      url.search = "";
+      return NextResponse.rewrite(url);
+    }
+  }
+
   const sub = resolveSubdomain(request.headers.get("host") ?? "");
 
   if (sub) {

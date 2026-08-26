@@ -364,3 +364,10 @@ export interface AuditLogRow {
   metadata: Record<string, unknown> | null;
   created_at: string;
 }
+
+export interface FeatureFlagRow {
+  key: string;
+  enabled: boolean;
+  description: string;
+  updated_at: string;
+}
