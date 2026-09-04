@@ -269,7 +269,7 @@ export default function MarketingPage() {
       <footer className="border-t border-line py-10">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 text-sm text-muted sm:flex-row">
           <Logo />
-          <p>© {new Date().getFullYear()} PortoTional. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} portoja. All rights reserved.</p>
           <nav className="flex flex-wrap justify-center gap-x-4 gap-y-2" aria-label="Footer">
             <Link href="/login" className="hover:text-gold">Sign in</Link>
             <Link href="/signup" className="hover:text-gold">Get started</Link>
